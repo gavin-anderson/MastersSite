@@ -3,9 +3,9 @@
 import { createClient } from "@/lib/supabase/client";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useState } from "react";
+import { useState, Suspense } from "react";
 
-export default function LoginPage() {
+function LoginForm() {
   const supabase = createClient();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -37,6 +37,57 @@ export default function LoginPage() {
   }
 
   return (
+    <form onSubmit={handleSubmit} className="space-y-3">
+      <div className="space-y-1">
+        <label className="text-xs text-[var(--muted)] font-medium uppercase tracking-wider">Email</label>
+        <input
+          type="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          placeholder="your@email.com"
+          required
+          autoComplete="email"
+          className="field-input"
+        />
+      </div>
+
+      <div className="space-y-1">
+        <label className="text-xs text-[var(--muted)] font-medium uppercase tracking-wider">Password</label>
+        <input
+          type="password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          placeholder="••••••••"
+          required
+          autoComplete="current-password"
+          className="field-input"
+        />
+      </div>
+
+      {error && <p className="text-xs text-[var(--error)]">{error}</p>}
+
+      <button
+        type="submit"
+        disabled={loading}
+        className="btn-gold w-full justify-center mt-1"
+      >
+        {loading ? "Signing in…" : "Sign In"}
+      </button>
+
+      <div className="text-center pt-1">
+        <Link
+          href="/auth/forgot-password"
+          className="text-xs text-[var(--muted)] hover:text-[var(--foreground)] transition-colors"
+        >
+          Forgot your password?
+        </Link>
+      </div>
+    </form>
+  );
+}
+
+export default function LoginPage() {
+  return (
     <div className="min-h-[80vh] flex items-center justify-center">
       <div className="w-full max-w-sm space-y-6 animate-fade-in">
         <div className="text-center space-y-2">
@@ -48,52 +99,9 @@ export default function LoginPage() {
         </div>
 
         <div className="glass-card p-6">
-          <form onSubmit={handleSubmit} className="space-y-3">
-            <div className="space-y-1">
-              <label className="text-xs text-[var(--muted)] font-medium uppercase tracking-wider">Email</label>
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="your@email.com"
-                required
-                autoComplete="email"
-                className="field-input"
-              />
-            </div>
-
-            <div className="space-y-1">
-              <label className="text-xs text-[var(--muted)] font-medium uppercase tracking-wider">Password</label>
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
-                required
-                autoComplete="current-password"
-                className="field-input"
-              />
-            </div>
-
-            {error && <p className="text-xs text-[var(--error)]">{error}</p>}
-
-            <button
-              type="submit"
-              disabled={loading}
-              className="btn-gold w-full justify-center mt-1"
-            >
-              {loading ? "Signing in…" : "Sign In"}
-            </button>
-
-            <div className="text-center pt-1">
-              <Link
-                href="/auth/forgot-password"
-                className="text-xs text-[var(--muted)] hover:text-[var(--foreground)] transition-colors"
-              >
-                Forgot your password?
-              </Link>
-            </div>
-          </form>
+          <Suspense fallback={null}>
+            <LoginForm />
+          </Suspense>
         </div>
 
         <p className="text-center text-xs text-[var(--muted)]">
