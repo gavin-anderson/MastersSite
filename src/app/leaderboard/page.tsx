@@ -1,9 +1,9 @@
-import { createClient } from "@/lib/supabase/server";
-import { redirect } from "next/navigation";
+import { createClient } from "@supabase/supabase-js";
+import { unstable_cache } from "next/cache";
 import { TOURNAMENT_YEAR } from "@/types";
 import LeaderboardClient, { RankedEntry } from "@/components/LeaderboardClient";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 120;
 
 const GOLFER_KEYS: Array<[string, string, string]> = [
   ["usa_pick",      "usa_golfer",      "usa"],
@@ -14,50 +14,50 @@ const GOLFER_KEYS: Array<[string, string, string]> = [
   ["senior_pick",   "senior_golfer",   "senior"],
 ];
 
-async function getData() {
-  const supabase = await createClient();
+const getData = unstable_cache(
+  async (year: number) => {
+    // Use service-role client — no cookies needed, bypasses RLS for server-side caching
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    );
 
-  const [{ data: picks, error: picksError }, { data: stats }] = await Promise.all([
-    supabase
-      .from("picks")
-      .select(`
-        *,
-        usa_golfer:golfers!picks_usa_pick_fkey(id, name, country, region),
-        european_golfer:golfers!picks_european_pick_fkey(id, name, country, region),
-        asian_golfer:golfers!picks_asian_pick_fkey(id, name, country, region),
-        longshot_golfer:golfers!picks_longshot_pick_fkey(id, name, country, region),
-        liv_golfer:golfers!picks_liv_pick_fkey(id, name, country, region),
-        senior_golfer:golfers!picks_senior_pick_fkey(id, name, country, region)
-      `)
-      .eq("year", TOURNAMENT_YEAR),
-    supabase
-      .from("golfer_stats")
-      .select("golfer_id, score, position, status, thru")
-      .eq("year", TOURNAMENT_YEAR),
-  ]);
+    const [{ data: picks, error: picksError }, { data: stats }] = await Promise.all([
+      supabase
+        .from("picks")
+        .select(`
+          *,
+          usa_golfer:golfers!picks_usa_pick_fkey(id, name, country, region),
+          european_golfer:golfers!picks_european_pick_fkey(id, name, country, region),
+          asian_golfer:golfers!picks_asian_pick_fkey(id, name, country, region),
+          longshot_golfer:golfers!picks_longshot_pick_fkey(id, name, country, region),
+          liv_golfer:golfers!picks_liv_pick_fkey(id, name, country, region),
+          senior_golfer:golfers!picks_senior_pick_fkey(id, name, country, region)
+        `)
+        .eq("year", year),
+      supabase
+        .from("golfer_stats")
+        .select("golfer_id, score, position, status, thru")
+        .eq("year", year),
+    ]);
 
-  if (picksError) console.error("[leaderboard] picks query error:", picksError);
+    if (picksError) console.error("[leaderboard] picks query error:", picksError);
 
-  const userIds = (picks ?? []).map((p) => p.user_id);
-  const { data: profiles } = userIds.length
-    ? await supabase.from("profiles").select("id, display_name").in("id", userIds)
-    : { data: [] };
-  const profileMap = Object.fromEntries((profiles ?? []).map((p) => [p.id, p.display_name]));
+    const userIds = (picks ?? []).map((p) => p.user_id);
+    const { data: profiles } = userIds.length
+      ? await supabase.from("profiles").select("id, display_name").in("id", userIds)
+      : { data: [] };
+    const profileMap = Object.fromEntries((profiles ?? []).map((p) => [p.id, p.display_name]));
 
-  return { picks: picks ?? [], stats: stats ?? [], profileMap };
-}
+    return { picks: picks ?? [], stats: stats ?? [], profileMap };
+  },
+  ["leaderboard-data"],
+  { revalidate: 120 }
+);
 
 export default async function LeaderboardPage() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    redirect("/auth/login?redirectedFrom=/leaderboard");
-  }
-
-  const { picks, stats, profileMap } = await getData();
+  // Auth redirect is handled by middleware — no getUser() call needed here
+  const { picks, stats, profileMap } = await getData(TOURNAMENT_YEAR);
   const statsMap = Object.fromEntries(stats.map((s) => [s.golfer_id, s]));
 
   const ranked: RankedEntry[] = picks
@@ -108,7 +108,7 @@ export default async function LeaderboardPage() {
       )}
 
       <p className="text-xs text-[var(--muted)] text-center">
-        Scoring: combined score relative to par · Missed cut (MC) scores are not counted
+        Scoring: combined score relative to par
       </p>
     </div>
   );

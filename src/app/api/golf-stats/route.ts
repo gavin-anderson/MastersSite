@@ -4,8 +4,10 @@ import { createClient } from "@supabase/supabase-js";
 // This endpoint is called by Vercel Cron every 10 minutes during the tournament.
 // It fetches the Masters leaderboard from ESPN's unofficial API and syncs scores.
 
-const MASTERS_EVENT_ID = "401811941"; // 2026 Masters — update each year
-const ESPN_URL = `https://site.web.api.espn.com/apis/site/v2/sports/golf/leaderboard?league=pga&event=${MASTERS_EVENT_ID}`;
+const MASTERS_EVENT_ID = process.env.MASTERS_EVENT_ID;
+const ESPN_URL = MASTERS_EVENT_ID
+  ? `https://site.web.api.espn.com/apis/site/v2/sports/golf/leaderboard?league=pga&event=${MASTERS_EVENT_ID}`
+  : null;
 
 // Country → region mapping (expand as needed)
 const COUNTRY_REGION: Record<string, string> = {
@@ -68,6 +70,13 @@ const LIV_GOLFERS = new Set([
 ]);
 
 export async function GET(request: Request) {
+  if (!ESPN_URL) {
+    return NextResponse.json(
+      { error: "Missing MASTERS_EVENT_ID environment variable" },
+      { status: 500 }
+    );
+  }
+
   // Validate cron secret to prevent unauthorized calls
   const authHeader = request.headers.get("authorization");
   if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {

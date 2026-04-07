@@ -263,7 +263,9 @@ export default function PicksForm({
         return (
           <div key={cat.key} className="glass-card p-5 space-y-3">
             <div className="flex items-center gap-2">
-              <span className="text-xl">{cat.emoji}</span>
+              <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-[var(--border)] bg-white/5 text-base">
+                {cat.emoji}
+              </span>
               <div>
                 <h3 className="font-semibold text-sm">{cat.label}</h3>
                 <p className="text-xs text-[var(--muted)]">{cat.description}</p>

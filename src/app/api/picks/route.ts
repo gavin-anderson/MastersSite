@@ -3,7 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { TOURNAMENT_YEAR } from "@/types";
 
 export async function GET() {
-  const supabase = createClient();
+  const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -14,7 +14,15 @@ export async function GET() {
 
   const { data, error } = await supabase
     .from("picks")
-    .select("*")
+    .select(`
+      usa_pick, european_pick, asian_pick, longshot_pick, liv_pick, senior_pick,
+      usa_golfer:golfers!picks_usa_pick_fkey(name),
+      european_golfer:golfers!picks_european_pick_fkey(name),
+      asian_golfer:golfers!picks_asian_pick_fkey(name),
+      longshot_golfer:golfers!picks_longshot_pick_fkey(name),
+      liv_golfer:golfers!picks_liv_pick_fkey(name),
+      senior_golfer:golfers!picks_senior_pick_fkey(name)
+    `)
     .eq("user_id", user.id)
     .eq("year", TOURNAMENT_YEAR)
     .single();
@@ -27,7 +35,7 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
-  const supabase = createClient();
+  const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
