@@ -67,11 +67,17 @@ function AuthForm() {
         });
       }
 
-      setLoading(false);
-
-      // If email confirmation is required, Supabase returns a user with no session
       if (!data.session) {
         setSuccess("Account created! Check your email to confirm before signing in.");
+        setLoading(false);
+        return;
+      }
+
+      // Sign in immediately to ensure session cookies are properly set
+      const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
+      setLoading(false);
+      if (signInError) {
+        setError(signInError.message);
       } else {
         window.location.href = redirectedFrom;
       }

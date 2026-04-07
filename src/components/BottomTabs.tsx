@@ -32,8 +32,8 @@ const TABS = [
     ),
   },
   {
-    href: "/schedule",
-    label: "Schedule",
+    href: "/merged",
+    label: "Field",
     icon: (active: boolean) => (
       <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={active ? 2.5 : 2}>
         <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
