@@ -279,7 +279,7 @@ export default function MergedClient({
       {/* Table */}
       <div className="glass-card overflow-hidden">
         {/* Header row */}
-        <div className="grid grid-cols-[2rem_1fr_4.5rem_3.5rem_3.5rem_4rem] gap-x-2 items-center px-4 py-2 border-b border-[var(--border)] bg-white/[0.03]">
+        <div className="grid grid-cols-[1.5rem_1fr_3rem_3rem_3rem] sm:grid-cols-[2rem_1fr_4.5rem_3.5rem_3.5rem_4rem] gap-x-2 items-center px-3 sm:px-4 py-2 border-b border-[var(--border)] bg-white/[0.03]">
           <span className="text-[10px] font-semibold uppercase tracking-wider text-[var(--muted)] text-center">#</span>
           <span className="text-[10px] font-semibold uppercase tracking-wider text-[var(--muted)]">Player</span>
           <button
@@ -327,7 +327,7 @@ export default function MergedClient({
             isMC ? "MC" :
             isWD ? "WD" :
             golfer.status === "finished" ? "F" :
-            isActive && golfer.thru !== null ? `Thru ${golfer.thru}` :
+            isActive && golfer.thru !== null ? golfer.thru.toString() :
             "—";
 
           const thruCls = isActive
@@ -337,7 +337,7 @@ export default function MergedClient({
           return (
             <div
               key={golfer.name}
-              className={`grid grid-cols-[2rem_1fr_4.5rem_3.5rem_3.5rem_4rem] gap-x-2 items-center px-4 py-2.5 ${
+              className={`grid grid-cols-[1.5rem_1fr_3rem_3rem_3rem] sm:grid-cols-[2rem_1fr_4.5rem_3.5rem_3.5rem_4rem] gap-x-2 items-center px-3 sm:px-4 py-2.5 ${
                 i < displayed.length - 1 ? "border-b border-[var(--border)]/40" : ""
               } ${isMC || isWD ? "opacity-40" : ""} ${isActive ? "bg-[var(--accent-light)]/5" : ""}`}
             >
@@ -352,27 +352,29 @@ export default function MergedClient({
                 <span className={`text-sm font-medium truncate ${isMC || isWD ? "line-through" : ""}`}>
                   {golfer.name}
                 </span>
-                {golfer.region === "usa" && (
-                  <span className="badge badge-usa shrink-0">USA</span>
-                )}
-                {golfer.region === "european" && (
-                  <span className="badge badge-european shrink-0">EUR</span>
-                )}
-                {golfer.region === "international" && (
-                  <span className="badge badge-international shrink-0">Intl</span>
-                )}
-                {golfer.is_liv && (
-                  <span className="badge badge-liv shrink-0">LIV</span>
-                )}
-                {golfer.is_longshot && (
-                  <span className="badge badge-longshot shrink-0">Long</span>
-                )}
-                {golfer.is_past_champ && (
-                  <span className="badge badge-past-champ shrink-0">Champ</span>
-                )}
-                {golfer.is_young_gun && (
-                  <span className="badge badge-young-gun shrink-0">U-25</span>
-                )}
+                <span className="hidden sm:contents">
+                  {golfer.region === "usa" && (
+                    <span className="badge badge-usa shrink-0">USA</span>
+                  )}
+                  {golfer.region === "european" && (
+                    <span className="badge badge-european shrink-0">EUR</span>
+                  )}
+                  {golfer.region === "international" && (
+                    <span className="badge badge-international shrink-0">Intl</span>
+                  )}
+                  {golfer.is_liv && (
+                    <span className="badge badge-liv shrink-0">LIV</span>
+                  )}
+                  {golfer.is_longshot && (
+                    <span className="badge badge-longshot shrink-0">Long</span>
+                  )}
+                  {golfer.is_past_champ && (
+                    <span className="badge badge-past-champ shrink-0">Champ</span>
+                  )}
+                  {golfer.is_young_gun && (
+                    <span className="badge badge-young-gun shrink-0">U-25</span>
+                  )}
+                </span>
                 {pick && <span className="text-sm leading-none shrink-0">⭐</span>}
                 {isActive && (
                   <span className="w-1.5 h-1.5 rounded-full bg-[var(--accent-light)] animate-pulse shrink-0" />
