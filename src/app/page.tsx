@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { TOURNAMENT_YEAR } from "@/types";
 
+export const dynamic = "force-static";
+
 const CATEGORIES = [
   {
     emoji: "🇺🇸",

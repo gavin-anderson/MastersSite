@@ -1,5 +1,5 @@
+import { Suspense } from "react";
 import { createClient } from "@supabase/supabase-js";
-import { createClient as createServerClient } from "@/lib/supabase/server";
 import { TOURNAMENT_YEAR } from "@/types";
 import LeaderboardClient, { RankedEntry } from "@/components/LeaderboardClient";
 
@@ -15,11 +15,7 @@ const GOLFER_KEYS: Array<[string, string, string]> = [
   ["young_guns_pick",    "young_guns_golfer",    "young_gun"],
 ];
 
-export default async function LeaderboardPage() {
-  const serverClient = await createServerClient();
-  const { data: { user } } = await serverClient.auth.getUser();
-  const currentUserId = user?.id ?? null;
-
+async function LeaderboardContent() {
   const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!
@@ -58,8 +54,8 @@ export default async function LeaderboardPage() {
     : { data: [] };
   const profileMap = Object.fromEntries((profiles ?? []).map((p) => [p.id, p.display_name]));
 
-  const statsMap = Object.fromEntries((stats ?? []).map((s) => [s.golfer_id, s]));
   const picksLocked = config?.picks_locked ?? false;
+  const statsMap = Object.fromEntries((stats ?? []).map((s) => [s.golfer_id, s]));
 
   const ranked: RankedEntry[] = (picks ?? [])
     .map((p) => {
@@ -90,14 +86,11 @@ export default async function LeaderboardPage() {
     .sort((a, b) => a.totalScore - b.totalScore);
 
   return (
-    <div className="max-w-xl mx-auto space-y-6 animate-fade-in">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">Pool Leaderboard</h1>
-        <p className="text-sm text-[var(--muted-light)] mt-1">
-          {TOURNAMENT_YEAR} Masters Tournament · {(picks ?? []).length} participant
-          {(picks ?? []).length !== 1 ? "s" : ""}
-        </p>
-      </div>
+    <>
+      <p className="text-sm text-[var(--muted-light)] -mt-4">
+        {TOURNAMENT_YEAR} Masters Tournament · {(picks ?? []).length} participant
+        {(picks ?? []).length !== 1 ? "s" : ""}
+      </p>
 
       {ranked.length === 0 ? (
         <div className="glass-card p-12 text-center space-y-3">
@@ -106,12 +99,38 @@ export default async function LeaderboardPage() {
           <p className="text-sm text-[var(--muted)]">Be the first to submit your picks!</p>
         </div>
       ) : (
-        <LeaderboardClient ranked={ranked} initialStats={statsMap} picksLocked={picksLocked} currentUserId={currentUserId} />
+        <LeaderboardClient ranked={ranked} picksLocked={picksLocked} />
       )}
 
       <p className="text-xs text-[var(--muted)] text-center">
         Scoring: combined score relative to par
       </p>
+    </>
+  );
+}
+
+function LeaderboardSkeleton() {
+  return (
+    <>
+      <div className="h-4 w-56 rounded bg-white/[0.04] animate-pulse -mt-4" />
+      {[...Array(6)].map((_, i) => (
+        <div key={i} className="glass-card p-4 flex items-center gap-3 animate-pulse">
+          <div className="w-8 h-8 rounded-full bg-white/[0.06] shrink-0" />
+          <div className="flex-1 h-4 rounded bg-white/[0.06]" />
+          <div className="w-10 h-5 rounded bg-white/[0.06]" />
+        </div>
+      ))}
+    </>
+  );
+}
+
+export default function LeaderboardPage() {
+  return (
+    <div className="max-w-xl mx-auto space-y-4 animate-fade-in">
+      <h1 className="text-2xl font-bold tracking-tight">Pool Leaderboard</h1>
+      <Suspense fallback={<LeaderboardSkeleton />}>
+        <LeaderboardContent />
+      </Suspense>
     </div>
   );
 }

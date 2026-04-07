@@ -1,7 +1,17 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
+const PROTECTED = ["/picks", "/leaderboard", "/settings"];
+
 export async function middleware(request: NextRequest) {
+  const pathname = request.nextUrl.pathname;
+
+  // Skip auth entirely for routes that don't need it
+  const isProtected = PROTECTED.some((p) => pathname.startsWith(p));
+  if (!isProtected) {
+    return NextResponse.next({ request });
+  }
+
   let supabaseResponse = NextResponse.next({ request });
 
   const supabase = createServerClient(
@@ -29,10 +39,7 @@ export async function middleware(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const pathname = request.nextUrl.pathname;
-
-  const PROTECTED = ["/picks", "/leaderboard", "/settings", "/set-name"];
-  if (!user && PROTECTED.some((p) => pathname.startsWith(p))) {
+  if (!user) {
     const redirectUrl = request.nextUrl.clone();
     redirectUrl.pathname = "/auth/login";
     redirectUrl.searchParams.set("redirectedFrom", pathname);

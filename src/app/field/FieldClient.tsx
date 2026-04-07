@@ -200,10 +200,12 @@ export default function FieldClient({
   golfers: initialGolfers,
   currentRound: initialRound,
   pickers,
+  picksLocked,
 }: {
   golfers: GolferRow[];
   currentRound: number;
   pickers: Record<string, string[]>;
+  picksLocked: boolean;
 }) {
   const [golfers, setGolfers] = useState<GolferRow[]>(initialGolfers);
   const [currentRound, setCurrentRound] = useState(initialRound);
@@ -339,19 +341,19 @@ export default function FieldClient({
             {cat.label}
           </button>
         ))}
-        {haspicks && (
-          <button
-            onClick={() => setMyPicksOnly((v) => !v)}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-all ${
-              myPicksOnly
-                ? "bg-[var(--gold)] text-black"
-                : "bg-white/[0.06] text-[var(--muted)] hover:text-[var(--foreground)] hover:bg-white/[0.1]"
-            }`}
-          >
-            <span>⭐</span>
-            My Picks
-          </button>
-        )}
+        <button
+          onClick={() => haspicks && setMyPicksOnly((v) => !v)}
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-all ${
+            myPicksOnly
+              ? "bg-[var(--gold)] text-black"
+              : haspicks
+              ? "bg-white/[0.06] text-[var(--muted)] hover:text-[var(--foreground)] hover:bg-white/[0.1]"
+              : "bg-white/[0.03] text-[var(--muted)]/50 cursor-default"
+          }`}
+        >
+          <span>⭐</span>
+          My Picks
+        </button>
       </div>
 
       {/* Results count */}
@@ -427,10 +429,10 @@ export default function FieldClient({
               className={i < displayed.length - 1 ? "border-b border-gray-700/50" : ""}
             >
               <button
-                onClick={() => setOpenGolfer(isOpen ? null : golfer.golfer_id)}
-                className={`w-full grid grid-cols-[1.5rem_1fr_3rem_3rem_3rem] sm:grid-cols-[2rem_1fr_4.5rem_3.5rem_3.5rem_4rem] gap-x-2 items-center px-3 sm:px-4 py-2.5 text-left transition-colors hover:bg-white/[0.03] ${
+                onClick={() => picksLocked && setOpenGolfer(isOpen ? null : golfer.golfer_id)}
+                className={`w-full grid grid-cols-[1.5rem_1fr_3rem_3rem_3rem] sm:grid-cols-[2rem_1fr_4.5rem_3.5rem_3.5rem_4rem] gap-x-2 items-center px-3 sm:px-4 py-2.5 text-left transition-colors ${picksLocked ? "hover:bg-white/[0.03] cursor-pointer" : "cursor-default"} ${
                   isMC || isWD ? "opacity-40" : ""
-                } ${pick ? "bg-[#fbbf24]/[0.08]" : isActive ? "bg-[var(--accent-light)]/5" : ""} ${isOpen ? "bg-white/[0.04]" : ""}`}
+                } ${pick ? "bg-white/[0.06]" : isActive ? "bg-[var(--accent-light)]/5" : ""} ${isOpen ? "bg-white/[0.04]" : ""}`}
               >
                 {/* Rank */}
                 <span className="text-xs tabular-nums text-[var(--muted)] text-center font-medium">

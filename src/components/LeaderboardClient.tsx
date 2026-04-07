@@ -111,22 +111,22 @@ function LeaderboardRow({ entry, rank, canExpand }: { entry: RankedEntry; rank: 
 
 export default function LeaderboardClient({
   ranked: initialRanked,
-  initialStats,
   picksLocked,
-  currentUserId,
 }: {
   ranked: RankedEntry[];
-  initialStats: Record<string, StatRow>;
   picksLocked: boolean;
-  currentUserId: string | null;
 }) {
-  const [statsMap, setStatsMap] = useState<Record<string, StatRow>>(initialStats);
+  const [statsMap, setStatsMap] = useState<Record<string, StatRow>>({});
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
 
   useEffect(() => {
     const supabase = createBrowserClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
     );
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      setCurrentUserId(user?.id ?? null);
+    });
     const channel = supabase
       .channel("leaderboard_golfer_stats")
       .on(
