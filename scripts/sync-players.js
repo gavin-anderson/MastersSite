@@ -71,7 +71,7 @@ function getRegion(country) {
 function isYoungGun(name, tournamentYear) {
   const born = BIRTH_YEARS[name];
   if (!born) return false;
-  return tournamentYear - born < 25; // under 25
+  return tournamentYear - born < 30; // under 30
 }
 
 // Normalize a name for fuzzy matching (remove accents + special chars, lowercase)

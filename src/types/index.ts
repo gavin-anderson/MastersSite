@@ -117,7 +117,7 @@ export const PICK_CATEGORIES: {
     key: "young_guns_pick",
     label: "Young Guns",
     region: "young_gun",
-    description: "A golfer under 25 years old",
+    description: "A golfer under 30 years old",
     emoji: "⚡",
   },
 ];

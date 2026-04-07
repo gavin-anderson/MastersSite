@@ -71,7 +71,7 @@ const LIV_PLAYERS = new Set([
 
 /**
  * Birth years for every player in the field.
- * Used to compute the "Young Guns" (under 25) tag.
+ * Used to compute the "Young Guns" (under 30) tag.
  * Keyed by exact ESPN displayName.
  */
 const BIRTH_YEARS = {

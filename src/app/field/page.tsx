@@ -5,10 +5,6 @@ import FieldClient, { GolferRow } from "./FieldClient";
 
 export const revalidate = 60;
 
-const PICK_COLS = [
-  "usa_pick", "european_pick", "international_pick",
-  "longshot_pick", "liv_pick", "past_champ_pick", "young_guns_pick",
-];
 
 export default async function FieldPage() {
   const supabase = await createClient();
@@ -56,7 +52,7 @@ export default async function FieldPage() {
   );
   const { data: picks } = await service
     .from("picks")
-    .select(`user_id, ${PICK_COLS.join(", ")}`)
+    .select("user_id, usa_pick, european_pick, international_pick, longshot_pick, liv_pick, past_champ_pick, young_guns_pick")
     .eq("year", TOURNAMENT_YEAR);
 
   const userIds = (picks ?? []).map((p) => p.user_id);
@@ -66,6 +62,7 @@ export default async function FieldPage() {
   const profileMap = Object.fromEntries((profiles ?? []).map((p: { id: string; display_name: string }) => [p.id, p.display_name]));
 
   const pickers: Record<string, string[]> = {};
+  const PICK_COLS = ["usa_pick", "european_pick", "international_pick", "longshot_pick", "liv_pick", "past_champ_pick", "young_guns_pick"] as const;
   for (const pick of picks ?? []) {
     const displayName = profileMap[pick.user_id];
     if (!displayName) continue;

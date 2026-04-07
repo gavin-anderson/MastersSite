@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { createBrowserClient } from "@supabase/ssr";
 import { Golfer, Picks, PICK_CATEGORIES } from "@/types";
@@ -39,7 +38,7 @@ const REGION_LABEL: Record<string, string> = {
   longshot: "Longshot",
   liv: "LIV",
   past_champ: "Champ",
-  young_gun: "U-25",
+  young_gun: "U-30",
 };
 
 const REGION_BADGE: Record<string, string> = {
@@ -130,10 +129,10 @@ export default function PicksForm({
   locked = false,
   stats = {},
 }: PicksFormProps) {
-  const router = useRouter();
   const supabase = createClient();
 
-  const hasPicks = PICK_CATEGORIES.every((cat) => !!(existingPicks?.[cat.key]));
+  const [savedOnce, setSavedOnce] = useState(false);
+  const hasPicks = savedOnce || PICK_CATEGORIES.every((cat) => !!(existingPicks?.[cat.key]));
 
   const [mode, setMode] = useState<"roster" | "editing">(
     hasPicks || locked ? "roster" : "editing"
@@ -236,7 +235,7 @@ export default function PicksForm({
     if (picksError) {
       setError(picksError.message);
     } else {
-      router.refresh();
+      setSavedOnce(true);
       setMode("roster");
     }
   }
@@ -312,7 +311,7 @@ export default function PicksForm({
 
   // ── Selection form ──────────────────────────────────────────
   return (
-    <form onSubmit={handleSubmit} className="space-y-5">
+    <form onSubmit={handleSubmit} className="space-y-3">
       {PICK_CATEGORIES.map((cat) => {
         const options = golfersByCategory[cat.key] ?? [];
         const selected = picks[cat.key];
@@ -346,7 +345,7 @@ export default function PicksForm({
                 No golfers available in this category yet.
               </p>
             ) : (
-              <div className="grid gap-2 max-h-64 overflow-y-auto pr-1">
+              <div className="grid gap-1.5 max-h-44 overflow-y-auto pr-1">
                 {options.map((golfer) => {
                   const isSelected = picks[cat.key] === golfer.id;
                   const takenElsewhere = !isSelected && pickedIds.has(golfer.id);
@@ -411,7 +410,7 @@ export default function PicksForm({
                             <span className="badge badge-past-champ">Champ</span>
                           )}
                           {golfer.is_young_gun && cat.region !== "young_gun" && (
-                            <span className="badge badge-young-gun">U-25</span>
+                            <span className="badge badge-young-gun">U-30</span>
                           )}
                         </div>
                       </div>

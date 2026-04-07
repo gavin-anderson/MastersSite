@@ -61,7 +61,7 @@ const REGION_LABEL: Record<string, string> = {
   longshot: "LONG",
   liv: "LIV",
   past_champ: "CHAMP",
-  young_gun: "U-25",
+  young_gun: "U-30",
 };
 
 const CATEGORIES = [
@@ -72,7 +72,7 @@ const CATEGORIES = [
   { key: "longshot",      label: "Longshot",  icon: <span>🎯</span> },
   { key: "liv",           label: "LIV",       icon: <span>⚡</span> },
   { key: "past_champ",    label: "Champs",    icon: <span>🏆</span> },
-  { key: "young_gun",     label: "U-25",      icon: <span>🌟</span> },
+  { key: "young_gun",     label: "U-30",      icon: <span>🌟</span> },
 ];
 
 function formatOdds(odds: number | null): string {
@@ -322,7 +322,7 @@ export default function GolfersClient({ golfers, stats, tournamentStarted, curre
                           <span className="badge badge-past-champ">Champ</span>
                         )}
                         {golfer.is_young_gun && (
-                          <span className="badge badge-young-gun">U-25</span>
+                          <span className="badge badge-young-gun">U-30</span>
                         )}
                         {golfer.odds && (
                           <span className="text-[10px] text-[var(--gold-light)] font-medium">
@@ -380,7 +380,7 @@ export default function GolfersClient({ golfers, stats, tournamentStarted, curre
                           <span className="badge badge-past-champ">Champ</span>
                         )}
                         {golfer.is_young_gun && (
-                          <span className="badge badge-young-gun">U-25</span>
+                          <span className="badge badge-young-gun">U-30</span>
                         )}
                       </div>
                     </div>

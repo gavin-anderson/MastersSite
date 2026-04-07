@@ -42,7 +42,7 @@ const CATEGORIES = [
     emoji: "🌟",
     label: "Young Guns",
     color: "badge-young-gun",
-    rules: "Pick a golfer under 25 years old at the time of the tournament.",
+    rules: "Pick a golfer under 30 years old at the time of the tournament.",
   },
 ];
 

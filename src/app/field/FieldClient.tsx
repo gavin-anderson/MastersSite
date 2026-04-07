@@ -13,7 +13,7 @@ const CATEGORIES = [
   { key: "longshot",      label: "Longshot", icon: <span>🎯</span> },
   { key: "liv",           label: "LIV",      icon: <span>⚡</span> },
   { key: "past_champ",    label: "Champs",   icon: <span>🏆</span> },
-  { key: "young_gun",     label: "U-25",     icon: <span>🌟</span> },
+  { key: "young_gun",     label: "U-30",     icon: <span>🌟</span> },
 ];
 
 export type SortMode = "total" | "round" | "thru" | "holes";
@@ -465,7 +465,7 @@ export default function FieldClient({
                       <span className="badge badge-past-champ shrink-0">Champ</span>
                     )}
                     {golfer.is_young_gun && (
-                      <span className="badge badge-young-gun shrink-0">U-25</span>
+                      <span className="badge badge-young-gun shrink-0">U-30</span>
                     )}
                   </span>
                   {pick && <span className="text-sm leading-none shrink-0">⭐</span>}
