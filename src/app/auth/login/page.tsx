@@ -2,12 +2,11 @@
 
 import { createClient } from "@/lib/supabase/client";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { useState, Suspense } from "react";
 
 function AuthForm() {
   const supabase = createClient();
-  const router = useRouter();
   const searchParams = useSearchParams();
   const redirectedFrom = searchParams.get("redirectedFrom") ?? "/picks";
 
@@ -45,8 +44,7 @@ function AuthForm() {
       if (error) {
         setError(error.message);
       } else {
-        router.push(redirectedFrom);
-        router.refresh();
+        window.location.href = redirectedFrom;
       }
     } else {
       const { data, error } = await supabase.auth.signUp({ email, password });
