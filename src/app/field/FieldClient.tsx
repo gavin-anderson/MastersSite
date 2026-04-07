@@ -1,8 +1,21 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
+import US from "country-flag-icons/react/3x2/US";
+import EU from "country-flag-icons/react/3x2/EU";
 
-export type SortMode = "total" | "round" | "thru";
+const CATEGORIES = [
+  { key: "all",           label: "All",      icon: null },
+  { key: "usa",           label: "USA",      icon: <US className="w-4 h-auto rounded-[2px]" /> },
+  { key: "european",      label: "EUR",      icon: <EU className="w-4 h-auto rounded-[2px]" /> },
+  { key: "international", label: "Intl",     icon: <span>🌍</span> },
+  { key: "longshot",      label: "Longshot", icon: <span>🎯</span> },
+  { key: "liv",           label: "LIV",      icon: <span>⚡</span> },
+  { key: "past_champ",    label: "Champs",   icon: <span>🏆</span> },
+  { key: "young_gun",     label: "U-25",     icon: <span>🌟</span> },
+];
+
+export type SortMode = "total" | "round" | "thru" | "holes";
 
 export interface GolferRow {
   name: string;
@@ -12,6 +25,12 @@ export interface GolferRow {
   score: number | null;
   roundScore: number | null;
   teeTime: string | null;
+  image_url: string | null;
+  is_liv: boolean;
+  is_longshot: boolean;
+  is_past_champ: boolean;
+  is_young_gun: boolean;
+  region: string;
 }
 
 export type PickedNames = Record<string, { label: string; emoji: string }>;
@@ -79,14 +98,22 @@ function sortGolfers(golfers: GolferRow[], mode: SortMode): GolferRow[] {
     if (mode === "total") {
       const aVal = a.score ?? 9999;
       const bVal = b.score ?? 9999;
-      return aVal !== bVal ? aVal - bVal : (a.name < b.name ? -1 : 1);
+      if (aVal !== bVal) return aVal - bVal;
+      const aTime = a.teeTime ? new Date(a.teeTime).getTime() : 9999999999999;
+      const bTime = b.teeTime ? new Date(b.teeTime).getTime() : 9999999999999;
+      return aTime - bTime;
     }
     if (mode === "round") {
       const aVal = a.roundScore ?? 9999;
       const bVal = b.roundScore ?? 9999;
       return aVal !== bVal ? aVal - bVal : (a.name < b.name ? -1 : 1);
     }
-    // Tee sort: earliest tee time first, no tee time last
+    if (mode === "holes") {
+      const aVal = thruValue(a);
+      const bVal = thruValue(b);
+      return aVal !== bVal ? bVal - aVal : (a.name < b.name ? -1 : 1);
+    }
+    // Tee sort: earliest tee time first
     const aTime = a.teeTime ? new Date(a.teeTime).getTime() : 9999999999999;
     const bTime = b.teeTime ? new Date(b.teeTime).getTime() : 9999999999999;
     return aTime - bTime;
@@ -98,6 +125,7 @@ function assignRanks(sorted: GolferRow[], mode: SortMode): (number | string)[] {
     if (g.status === "mc" || g.status === "wd") return null;
     if (mode === "total") return g.score;
     if (mode === "round") return g.roundScore;
+    if (mode === "holes") return thruValue(g);
     return thruValue(g);
   };
 
@@ -117,7 +145,24 @@ function assignRanks(sorted: GolferRow[], mode: SortMode): (number | string)[] {
   return ranks;
 }
 
-export default function ScheduleClient({
+function PlayerAvatar({ imageUrl, name, flag }: { imageUrl: string | null; name: string; flag: string }) {
+  const [failed, setFailed] = useState(false);
+
+  if (!imageUrl || failed) {
+    return <span className="text-base leading-none shrink-0">{flag}</span>;
+  }
+
+  return (
+    <img
+      src={imageUrl}
+      alt={name}
+      className="w-7 h-7 rounded-full object-cover object-top shrink-0 bg-white/10"
+      onError={() => setFailed(true)}
+    />
+  );
+}
+
+export default function FieldClient({
   golfers,
   currentRound,
 }: {
@@ -127,6 +172,8 @@ export default function ScheduleClient({
   const [sort, setSort] = useState<SortMode>("total");
   const [myPicksOnly, setMyPicksOnly] = useState(false);
   const [pickedNames, setPickedNames] = useState<PickedNames>({});
+  const [search, setSearch] = useState("");
+  const [category, setCategory] = useState("all");
 
   useEffect(() => {
     fetch("/api/picks")
@@ -144,41 +191,73 @@ export default function ScheduleClient({
   }, []);
 
   const haspicks = Object.keys(pickedNames).length > 0;
-  const sorted = sortGolfers(golfers, sort);
+
+  const filtered = useMemo(() => {
+    let list = [...golfers];
+    if (category === "longshot") list = list.filter((g) => g.is_longshot);
+    else if (category === "liv") list = list.filter((g) => g.is_liv);
+    else if (category === "past_champ") list = list.filter((g) => g.is_past_champ);
+    else if (category === "young_gun") list = list.filter((g) => g.is_young_gun);
+    else if (category === "international") list = list.filter((g) => g.region !== "usa" && g.region !== "european");
+    else if (category !== "all") list = list.filter((g) => g.region === category);
+    if (search.trim()) {
+      const q = search.trim().toLowerCase();
+      list = list.filter((g) => g.name.toLowerCase().includes(q));
+    }
+    return list;
+  }, [golfers, category, search]);
+
+  const sorted = sortGolfers(filtered, sort);
   const displayed = myPicksOnly ? sorted.filter((g) => pickedNames[g.name]) : sorted;
   const ranks = assignRanks(sorted, sort);
-  // ranks index corresponds to `sorted`, need index map for `displayed`
   const rankByName = Object.fromEntries(sorted.map((g, i) => [g.name, ranks[i]]));
 
   return (
     <div className="space-y-3">
-      {/* Controls row */}
-      <div className="flex items-center justify-between gap-2 flex-wrap">
-        {/* Sort tabs */}
-        <div className="flex items-center gap-2">
-          <span className="text-xs text-[var(--muted)] font-medium">Sort by</span>
-          <div className="flex gap-1">
-            {(["total", "round", "thru"] as SortMode[]).map((mode) => (
-              <button
-                key={mode}
-                onClick={() => setSort(mode)}
-                className={`px-3 py-1 rounded-full text-xs font-semibold transition-all capitalize ${
-                  sort === mode
-                    ? "bg-[var(--gold)] text-black"
-                    : "bg-white/[0.06] text-[var(--muted)] hover:text-[var(--foreground)] hover:bg-white/[0.1]"
-                }`}
-              >
-                {mode === "total" ? "Total" : mode === "round" ? "Round" : "Tee"}
-              </button>
-            ))}
-          </div>
-        </div>
+      {/* Search */}
+      <div className="relative">
+        <svg className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--muted)]" width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+          <circle cx="11" cy="11" r="8" />
+          <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35" />
+        </svg>
+        <input
+          type="text"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Search players…"
+          className="field-input pl-9 text-sm"
+        />
+        {search && (
+          <button onClick={() => setSearch("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--muted)] hover:text-[var(--foreground)]" aria-label="Clear search">
+            <svg width="14" height="14" fill="none" viewBox="0 0 14 14">
+              <path d="M1 1l12 12M13 1L1 13" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+            </svg>
+          </button>
+        )}
+      </div>
 
-        {/* My Picks filter — only shown when user has picks */}
+      {/* Category filter pills + My Picks */}
+      <div className="flex items-center gap-2 flex-wrap">
+        <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-none flex-1">
+          {CATEGORIES.map((cat) => (
+            <button
+              key={cat.key}
+              onClick={() => setCategory((prev) => prev === cat.key ? "all" : cat.key)}
+              className={`shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
+                category === cat.key
+                  ? "bg-[var(--accent)] text-white"
+                  : "bg-white/5 text-[var(--muted)] hover:bg-white/10 hover:text-[var(--foreground)]"
+              }`}
+            >
+              {cat.icon}
+              {cat.label}
+            </button>
+          ))}
+        </div>
         {haspicks && (
           <button
             onClick={() => setMyPicksOnly((v) => !v)}
-            className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold transition-all ${
+            className={`shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-all ${
               myPicksOnly
                 ? "bg-[var(--gold)] text-black"
                 : "bg-white/[0.06] text-[var(--muted)] hover:text-[var(--foreground)] hover:bg-white/[0.1]"
@@ -190,24 +269,43 @@ export default function ScheduleClient({
         )}
       </div>
 
+      {/* Results count */}
+      <p className="text-xs text-[var(--muted)]">
+        {filtered.length} player{filtered.length !== 1 ? "s" : ""}
+        {category !== "all" ? ` in ${CATEGORIES.find((c) => c.key === category)?.label ?? category}` : ""}
+        {search.trim() ? ` matching "${search.trim()}"` : ""}
+      </p>
+
       {/* Table */}
       <div className="glass-card overflow-hidden">
         {/* Header row */}
-        <div className="grid grid-cols-[2rem_1fr_4.5rem_3.5rem_3.5rem_4rem] gap-x-2 items-center px-4 py-2 border-b border-[var(--border)] bg-white/[0.03]">
+        <div className="grid grid-cols-[1.5rem_1fr_3rem_3rem_3rem] sm:grid-cols-[2rem_1fr_4.5rem_3.5rem_3.5rem_4rem] gap-x-2 items-center px-3 sm:px-4 py-2 border-b border-[var(--border)] bg-white/[0.03]">
           <span className="text-[10px] font-semibold uppercase tracking-wider text-[var(--muted)] text-center">#</span>
           <span className="text-[10px] font-semibold uppercase tracking-wider text-[var(--muted)]">Player</span>
-          <span className={`text-[10px] font-semibold uppercase tracking-wider text-center hidden sm:block ${sort === "thru" ? "text-[var(--gold)]" : "text-[var(--muted)]"}`}>
+          <button
+            onClick={() => setSort("thru")}
+            className={`text-[10px] font-semibold uppercase tracking-wider text-center hidden sm:block transition-colors hover:text-[var(--gold)] ${sort === "thru" ? "text-[var(--gold)]" : "text-[var(--muted)]"}`}
+          >
             Tee
-          </span>
-          <span className={`text-[10px] font-semibold uppercase tracking-wider text-center ${sort === "round" ? "text-[var(--gold)]" : "text-[var(--muted)]"}`}>
+          </button>
+          <button
+            onClick={() => setSort("round")}
+            className={`text-[10px] font-semibold uppercase tracking-wider text-center transition-colors hover:text-[var(--gold)] ${sort === "round" ? "text-[var(--gold)]" : "text-[var(--muted)]"}`}
+          >
             Rnd
-          </span>
-          <span className={`text-[10px] font-semibold uppercase tracking-wider text-center ${sort === "total" ? "text-[var(--gold)]" : "text-[var(--muted)]"}`}>
+          </button>
+          <button
+            onClick={() => setSort("total")}
+            className={`text-[10px] font-semibold uppercase tracking-wider text-center transition-colors hover:text-[var(--gold)] ${sort === "total" ? "text-[var(--gold)]" : "text-[var(--muted)]"}`}
+          >
             Total
-          </span>
-          <span className="text-[10px] font-semibold uppercase tracking-wider text-right text-[var(--muted)]">
+          </button>
+          <button
+            onClick={() => setSort("holes")}
+            className={`text-[10px] font-semibold uppercase tracking-wider text-right transition-colors hover:text-[var(--gold)] ${sort === "holes" ? "text-[var(--gold)]" : "text-[var(--muted)]"}`}
+          >
             Thru
-          </span>
+          </button>
         </div>
 
         {displayed.length === 0 && (
@@ -229,7 +327,7 @@ export default function ScheduleClient({
             isMC ? "MC" :
             isWD ? "WD" :
             golfer.status === "finished" ? "F" :
-            isActive && golfer.thru !== null ? `Thru ${golfer.thru}` :
+            isActive && golfer.thru !== null ? golfer.thru.toString() :
             "—";
 
           const thruCls = isActive
@@ -239,7 +337,7 @@ export default function ScheduleClient({
           return (
             <div
               key={golfer.name}
-              className={`grid grid-cols-[2rem_1fr_4.5rem_3.5rem_3.5rem_4rem] gap-x-2 items-center px-4 py-2.5 ${
+              className={`grid grid-cols-[1.5rem_1fr_3rem_3rem_3rem] sm:grid-cols-[2rem_1fr_4.5rem_3.5rem_3.5rem_4rem] gap-x-2 items-center px-3 sm:px-4 py-2.5 ${
                 i < displayed.length - 1 ? "border-b border-[var(--border)]/40" : ""
               } ${isMC || isWD ? "opacity-40" : ""} ${isActive ? "bg-[var(--accent-light)]/5" : ""}`}
             >
@@ -248,17 +346,36 @@ export default function ScheduleClient({
                 {rank}
               </span>
 
-              {/* Flag + Name + Pick badge */}
+              {/* Avatar + Name + Pick badge */}
               <div className="flex items-center gap-1.5 min-w-0">
-                <span className="text-base leading-none shrink-0">{flag}</span>
+                <PlayerAvatar imageUrl={golfer.image_url} name={golfer.name} flag={flag} />
                 <span className={`text-sm font-medium truncate ${isMC || isWD ? "line-through" : ""}`}>
                   {golfer.name}
                 </span>
-                {pick && (
-                  <span className="shrink-0 text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-[var(--gold)]/20 text-[var(--gold)] leading-none">
-                    {pick.emoji}<span className="hidden sm:inline"> {pick.label}</span>
-                  </span>
-                )}
+                <span className="hidden sm:contents">
+                  {golfer.region === "usa" && (
+                    <span className="badge badge-usa shrink-0">USA</span>
+                  )}
+                  {golfer.region === "european" && (
+                    <span className="badge badge-european shrink-0">EUR</span>
+                  )}
+                  {golfer.region === "international" && (
+                    <span className="badge badge-international shrink-0">Intl</span>
+                  )}
+                  {golfer.is_liv && (
+                    <span className="badge badge-liv shrink-0">LIV</span>
+                  )}
+                  {golfer.is_longshot && (
+                    <span className="badge badge-longshot shrink-0">Long</span>
+                  )}
+                  {golfer.is_past_champ && (
+                    <span className="badge badge-past-champ shrink-0">Champ</span>
+                  )}
+                  {golfer.is_young_gun && (
+                    <span className="badge badge-young-gun shrink-0">U-25</span>
+                  )}
+                </span>
+                {pick && <span className="text-sm leading-none shrink-0">⭐</span>}
                 {isActive && (
                   <span className="w-1.5 h-1.5 rounded-full bg-[var(--accent-light)] animate-pulse shrink-0" />
                 )}

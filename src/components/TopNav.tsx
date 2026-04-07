@@ -7,10 +7,8 @@ import { User } from "@supabase/supabase-js";
 const NAV_LINKS = [
   { href: "/picks", label: "Picks" },
   { href: "/leaderboard", label: "Leaderboard" },
-  { href: "/golfers", label: "Field" },
-  { href: "/schedule", label: "Schedule" },
-  { href: "/merged", label: "Merged" },
-{ href: "/", label: "How It Works" },
+  { href: "/field", label: "Field" },
+  { href: "/", label: "How It Works" },
 ];
 
 interface TopNavProps {

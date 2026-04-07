@@ -1,6 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { TOURNAMENT_YEAR } from "@/types";
-import MergedClient, { GolferRow } from "./MergedClient";
+import FieldClient, { GolferRow } from "./FieldClient";
 
 export const revalidate = 60;
 
@@ -69,7 +69,7 @@ async function getGolfers(): Promise<{ golfers: GolferRow[]; currentRound: numbe
   }
 }
 
-export default async function MergedPage() {
+export default async function FieldPage() {
   const [result, supabase] = await Promise.all([
     getGolfers(),
     createClient(),
@@ -103,7 +103,7 @@ export default async function MergedPage() {
   return (
     <div className="max-w-4xl mx-auto space-y-5 animate-fade-in">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">Schedule</h1>
+        <h1 className="text-2xl font-bold tracking-tight">Field</h1>
         <p className="text-sm text-[var(--muted-light)] mt-1">
           {TOURNAMENT_YEAR} Masters{result ? ` · Round ${result.currentRound}` : ""}
         </p>
@@ -118,7 +118,7 @@ export default async function MergedPage() {
           </p>
         </div>
       ) : (
-        <MergedClient golfers={result.golfers} currentRound={result.currentRound} />
+        <FieldClient golfers={result.golfers} currentRound={result.currentRound} />
       )}
 
       <p className="text-xs text-[var(--muted)] text-center pb-2">
