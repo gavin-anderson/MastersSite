@@ -146,10 +146,17 @@ export default function PicksForm({
 
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [openCategory, setOpenCategory] = useState<string | null>(
-    // Open the first unpicked category by default
-    PICK_CATEGORIES.find((cat) => !existingPicks?.[cat.key])?.key ?? null
+  const [openCategories, setOpenCategories] = useState<Set<string>>(
+    () => new Set(PICK_CATEGORIES.map((cat) => cat.key))
   );
+
+  function toggleCategory(key: string) {
+    setOpenCategories((prev) => {
+      const next = new Set(prev);
+      next.has(key) ? next.delete(key) : next.add(key);
+      return next;
+    });
+  }
   const [liveStats, setLiveStats] = useState<Record<string, StatRow>>(stats);
 
   useEffect(() => {
@@ -272,7 +279,10 @@ export default function PicksForm({
           </div>
           {!locked && (
             <button
-              onClick={() => setMode("editing")}
+              onClick={() => {
+                setOpenCategories(new Set(PICK_CATEGORIES.map((cat) => cat.key)));
+                setMode("editing");
+              }}
               className="btn-outline flex items-center gap-2 text-sm py-2 px-4"
             >
               <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
@@ -315,19 +325,19 @@ export default function PicksForm({
 
   // ── Selection form ──────────────────────────────────────────
   return (
-    <form onSubmit={handleSubmit} className="space-y-2">
+    <form onSubmit={handleSubmit} className="space-y-3">
       {PICK_CATEGORIES.map((cat) => {
         const options = golfersByCategory[cat.key] ?? [];
         const selected = picks[cat.key];
         const selectedGolfer = golfers.find((g) => g.id === selected);
-        const isOpen = openCategory === cat.key;
+        const isOpen = openCategories.has(cat.key);
 
         return (
           <div key={cat.key} className="glass-card overflow-hidden">
             {/* Accordion header — always visible */}
             <button
               type="button"
-              onClick={() => setOpenCategory(isOpen ? null : cat.key)}
+              onClick={() => toggleCategory(cat.key)}
               className="w-full flex items-center gap-3 px-4 py-3 text-left"
             >
               <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-[var(--border)] bg-white/5">
@@ -386,15 +396,10 @@ export default function PicksForm({
                             onChange={() => {}}
                             onClick={() => {
                               if (takenElsewhere) return;
-                              const selecting = !isSelected;
-                              setPicks((prev) => ({ ...prev, [cat.key]: selecting ? golfer.id : "" }));
-                              if (selecting) {
-                                // Auto-advance to next unpicked category
-                                const nextCat = PICK_CATEGORIES.find(
-                                  (c) => c.key !== cat.key && !picks[c.key]
-                                );
-                                setOpenCategory(nextCat?.key ?? null);
-                              }
+                              setPicks((prev) => ({
+                                ...prev,
+                                [cat.key]: isSelected ? "" : golfer.id,
+                              }));
                             }}
                             className="sr-only"
                           />
