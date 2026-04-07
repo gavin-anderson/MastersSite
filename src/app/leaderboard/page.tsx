@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { redirect } from "next/navigation";
 import { TOURNAMENT_YEAR } from "@/types";
 import LeaderboardClient, { RankedEntry } from "@/components/LeaderboardClient";
 
@@ -16,7 +17,7 @@ const GOLFER_KEYS: Array<[string, string, string]> = [
 ];
 
 async function getData() {
-  const supabase = createClient();
+  const supabase = await createClient();
 
   const [{ data: picks, error: picksError }, { data: stats }] = await Promise.all([
     supabase
@@ -49,6 +50,15 @@ async function getData() {
 }
 
 export default async function LeaderboardPage() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    redirect("/auth/login?redirectedFrom=/leaderboard");
+  }
+
   const { picks, stats, profileMap } = await getData();
   const statsMap = Object.fromEntries(stats.map((s) => [s.golfer_id, s]));
 

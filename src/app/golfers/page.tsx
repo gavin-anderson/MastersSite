@@ -3,9 +3,15 @@ import { TOURNAMENT_YEAR } from "@/types";
 import GolfersClient from "@/components/GolfersClient";
 
 export default async function GolfersPage() {
-  const supabase = createClient();
+  const supabase = await createClient();
 
-  const { data: { user } } = await supabase.auth.getUser();
+  let user = null;
+  try {
+    const { data } = await supabase.auth.getUser();
+    user = data.user;
+  } catch {
+    // Not signed in — continue without user picks
+  }
 
   const [{ data: golfers }, { data: stats }, { data: picks }] = await Promise.all([
     supabase.from("golfers").select("*"),

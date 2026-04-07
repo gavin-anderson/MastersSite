@@ -4,7 +4,7 @@ import { createClient } from "@supabase/supabase-js";
 // This endpoint is called by Vercel Cron every 10 minutes during the tournament.
 // It fetches the Masters leaderboard from ESPN's unofficial API and syncs scores.
 
-const MASTERS_EVENT_ID = "401703511"; // 2025 Masters — update each year
+const MASTERS_EVENT_ID = "401703504"; // 2025 Masters — update each year
 const ESPN_URL = `https://site.web.api.espn.com/apis/site/v2/sports/golf/leaderboard?league=pga&event=${MASTERS_EVENT_ID}`;
 
 // Country → region mapping (expand as needed)
@@ -31,6 +31,20 @@ const COUNTRY_REGION: Record<string, string> = {
   Taiwan: "asian",
   India: "asian",
   Philippines: "asian",
+  Australia: "other",
+  "South Africa": "other",
+  Canada: "usa",
+  Argentina: "other",
+  Chile: "other",
+  Colombia: "other",
+  Mexico: "other",
+  Venezuela: "other",
+  "New Zealand": "other",
+  Fiji: "other",
+  "Puerto Rico": "usa",
+  Austria: "european",
+  Netherlands: "european",
+  "Cayman Islands": "other",
 };
 
 function getGeographicRegion(country: string): string {
@@ -105,8 +119,8 @@ export async function GET(request: Request) {
       const status = comp.status?.type?.name?.toLowerCase();
       const mappedStatus =
         status === "cut" ? "mc" :
-        status === "wd" ? "wd" :
-        status === "active" ? "active" : "notstarted";
+          status === "wd" ? "wd" :
+            status === "active" ? "active" : "notstarted";
 
       const thru = comp.status?.period ?? null;
 

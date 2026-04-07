@@ -2,7 +2,7 @@ import { TOURNAMENT_YEAR } from "@/types";
 
 export const revalidate = 60;
 
-const MASTERS_EVENT_ID = "401703511";
+const MASTERS_EVENT_ID = "401703504";
 const ESPN_URL = `https://site.web.api.espn.com/apis/site/v2/sports/golf/leaderboard?league=pga&event=${MASTERS_EVENT_ID}`;
 
 const COUNTRY_FLAG: Record<string, string> = {

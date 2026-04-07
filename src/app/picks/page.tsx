@@ -4,7 +4,7 @@ import { TOURNAMENT_YEAR } from "@/types";
 import PicksForm from "@/components/PicksForm";
 
 export default async function PicksPage() {
-  const supabase = createClient();
+  const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
