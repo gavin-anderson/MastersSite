@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { createBrowserClient } from "@supabase/ssr";
 import { Golfer, Picks, PICK_CATEGORIES } from "@/types";
 import US from "country-flag-icons/react/3x2/US";
 import EU from "country-flag-icons/react/3x2/EU";
@@ -146,6 +147,28 @@ export default function PicksForm({
 
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [liveStats, setLiveStats] = useState<Record<string, StatRow>>(stats);
+
+  useEffect(() => {
+    const supabase = createBrowserClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    );
+    const channel = supabase
+      .channel("picks_golfer_stats")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "golfer_stats" },
+        (payload) => {
+          const updated = payload.new as StatRow;
+          if (updated?.golfer_id) {
+            setLiveStats((prev) => ({ ...prev, [updated.golfer_id]: updated }));
+          }
+        }
+      )
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, []);
 
   // Set of golfer IDs already picked in any category
   const pickedIds = useMemo(
@@ -256,7 +279,7 @@ export default function PicksForm({
           {PICK_CATEGORIES.map((cat) => {
             const golferId = picks[cat.key];
             const golfer = golferId ? golferMap[golferId] : null;
-            const stat = golferId ? stats[golferId] : undefined;
+            const stat = golferId ? liveStats[golferId] : undefined;
 
             return (
               <div key={cat.key} className="glass-card-sm px-4 py-3 flex items-center gap-3">

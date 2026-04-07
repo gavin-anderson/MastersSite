@@ -108,7 +108,7 @@ export default async function LeaderboardPage() {
           <p className="text-sm text-[var(--muted)]">Be the first to submit your picks!</p>
         </div>
       ) : (
-        <LeaderboardClient ranked={ranked} />
+        <LeaderboardClient ranked={ranked} initialStats={statsMap} />
       )}
 
       <p className="text-xs text-[var(--muted)] text-center">

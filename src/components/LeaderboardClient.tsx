@@ -1,9 +1,18 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useMemo } from "react";
+import { createBrowserClient } from "@supabase/ssr";
 import US from "country-flag-icons/react/3x2/US";
 import EU from "country-flag-icons/react/3x2/EU";
 import type { ReactNode } from "react";
+
+interface StatRow {
+  golfer_id: string;
+  score: number | null;
+  position: number | null;
+  status: string;
+  thru: number | null;
+}
 
 const CATEGORY_MAP: Record<string, { icon: ReactNode; label: string }> = {
   usa:           { icon: <US className="w-4 h-auto rounded-[2px]" />, label: "American" },
@@ -98,7 +107,52 @@ function LeaderboardRow({ entry, rank }: { entry: RankedEntry; rank: number }) {
   );
 }
 
-export default function LeaderboardClient({ ranked }: { ranked: RankedEntry[] }) {
+export default function LeaderboardClient({
+  ranked: initialRanked,
+  initialStats,
+}: {
+  ranked: RankedEntry[];
+  initialStats: Record<string, StatRow>;
+}) {
+  const [statsMap, setStatsMap] = useState<Record<string, StatRow>>(initialStats);
+
+  useEffect(() => {
+    const supabase = createBrowserClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    );
+    const channel = supabase
+      .channel("leaderboard_golfer_stats")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "golfer_stats" },
+        (payload) => {
+          const updated = payload.new as StatRow;
+          if (updated?.golfer_id) {
+            setStatsMap((prev) => ({ ...prev, [updated.golfer_id]: updated }));
+          }
+        }
+      )
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, []);
+
+  const ranked = useMemo(() => {
+    return initialRanked
+      .map((entry) => {
+        const golferScores = entry.golferScores.map((gs) => {
+          const stat = gs.golfer?.id ? (statsMap[gs.golfer.id] ?? null) : null;
+          const isCut = stat?.status === "mc" || stat?.status === "cut";
+          const score = stat ? (isCut ? null : stat.score) : gs.score;
+          return { ...gs, score, stat: stat ?? gs.stat };
+        });
+        const totalScore = golferScores.reduce((sum, { score }) => sum + (score ?? 0), 0);
+        const allNoScore = golferScores.every(({ score }) => score === null);
+        return { ...entry, golferScores, totalScore, allNoScore };
+      })
+      .sort((a, b) => a.totalScore - b.totalScore);
+  }, [initialRanked, statsMap]);
+
   return (
     <div className="space-y-2">
       {ranked.map((entry, i) => (

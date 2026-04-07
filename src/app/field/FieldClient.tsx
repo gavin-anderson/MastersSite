@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
+import { createBrowserClient } from "@supabase/ssr";
 import US from "country-flag-icons/react/3x2/US";
 import EU from "country-flag-icons/react/3x2/EU";
 
@@ -18,6 +19,7 @@ const CATEGORIES = [
 export type SortMode = "total" | "round" | "thru" | "holes";
 
 export interface GolferRow {
+  golfer_id: string;
   name: string;
   country: string;
   status: "notstarted" | "active" | "finished" | "mc" | "wd";
@@ -120,6 +122,39 @@ function sortGolfers(golfers: GolferRow[], mode: SortMode): GolferRow[] {
   });
 }
 
+// Position for the # column: primary = total score, secondary = thru (lower = better), true tie = "—"
+function computePositions(golfers: GolferRow[]): Record<string, number | string> {
+  const result: Record<string, number | string> = {};
+
+  const active = golfers.filter(
+    (g) => g.status !== "mc" && g.status !== "wd" && g.score !== null
+  );
+
+  const sorted = [...active].sort((a, b) => {
+    const scoreDiff = (a.score ?? 9999) - (b.score ?? 9999);
+    if (scoreDiff !== 0) return scoreDiff;
+    return (a.thru ?? 0) - (b.thru ?? 0);
+  });
+
+  for (let i = 0; i < sorted.length; i++) {
+    const g = sorted[i];
+    const hasTie = sorted.some(
+      (other, j) => j !== i && other.score === g.score && (other.thru ?? 0) === (g.thru ?? 0)
+    );
+    result[g.name] = hasTie ? "—" : i + 1;
+  }
+
+  for (const g of golfers) {
+    if (!(g.name in result)) {
+      if (g.status === "mc") result[g.name] = "MC";
+      else if (g.status === "wd") result[g.name] = "WD";
+      else result[g.name] = "—";
+    }
+  }
+
+  return result;
+}
+
 function assignRanks(sorted: GolferRow[], mode: SortMode): (number | string)[] {
   const getValue = (g: GolferRow): number | null => {
     if (g.status === "mc" || g.status === "wd") return null;
@@ -163,17 +198,68 @@ function PlayerAvatar({ imageUrl, name, flag }: { imageUrl: string | null; name:
 }
 
 export default function FieldClient({
-  golfers,
-  currentRound,
+  golfers: initialGolfers,
+  currentRound: initialRound,
 }: {
   golfers: GolferRow[];
   currentRound: number;
 }) {
+  const [golfers, setGolfers] = useState<GolferRow[]>(initialGolfers);
+  const [currentRound, setCurrentRound] = useState(initialRound);
   const [sort, setSort] = useState<SortMode>("total");
   const [myPicksOnly, setMyPicksOnly] = useState(false);
   const [pickedNames, setPickedNames] = useState<PickedNames>({});
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("all");
+
+  // Supabase Realtime — subscribe to golfer_stats changes
+  useEffect(() => {
+    const supabase = createBrowserClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    );
+
+    const channel = supabase
+      .channel("golfer_stats_changes")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "golfer_stats" },
+        (payload) => {
+          const updated = payload.new as {
+            golfer_id: string;
+            score: number | null;
+            round_score: number | null;
+            status: string;
+            thru: number | null;
+            round: number | null;
+            tee_time: string | null;
+          };
+
+          const rawStatus = updated.status ?? "notstarted";
+          const status: GolferRow["status"] =
+            rawStatus === "complete" ? "finished" :
+            rawStatus === "active" ? "active" :
+            rawStatus === "mc" ? "mc" :
+            rawStatus === "wd" ? "wd" :
+            "notstarted";
+
+          setGolfers((prev) =>
+            prev.map((g) =>
+              g.golfer_id === updated.golfer_id
+                ? { ...g, score: updated.score, roundScore: updated.round_score, status, thru: updated.thru, teeTime: updated.tee_time }
+                : g
+            )
+          );
+
+          if (updated.round) {
+            setCurrentRound((prev) => Math.max(prev, updated.round!));
+          }
+        }
+      )
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, []);
 
   useEffect(() => {
     fetch("/api/picks")
@@ -209,8 +295,7 @@ export default function FieldClient({
 
   const sorted = sortGolfers(filtered, sort);
   const displayed = myPicksOnly ? sorted.filter((g) => pickedNames[g.name]) : sorted;
-  const ranks = assignRanks(sorted, sort);
-  const rankByName = Object.fromEntries(sorted.map((g, i) => [g.name, ranks[i]]));
+  const positions = useMemo(() => computePositions(golfers), [golfers]);
 
   return (
     <div className="space-y-3">
@@ -321,7 +406,7 @@ export default function FieldClient({
           const isWD = golfer.status === "wd";
           const isActive = golfer.status === "active";
           const pick = pickedNames[golfer.name];
-          const rank = rankByName[golfer.name];
+          const rank = positions[golfer.name] ?? "—";
 
           const thruLabel =
             isMC ? "MC" :
