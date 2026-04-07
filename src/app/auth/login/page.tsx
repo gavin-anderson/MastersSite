@@ -35,10 +35,7 @@ function AuthForm() {
       return;
     }
 
-    if (mode === "signup" && !displayName.trim()) {
-      setError("Please enter a display name.");
-      return;
-    }
+    // Display name defaults to email if left blank
 
     setLoading(true);
 
@@ -59,12 +56,24 @@ function AuthForm() {
         return;
       }
 
-      // Save display name to profile
+      // Save display name to profile (fallback to email if blank)
       if (data.user) {
-        await supabase.from("profiles").upsert({
+        const name = displayName.trim() || email.trim();
+        const { error: profileError } = await supabase.from("profiles").upsert({
           id: data.user.id,
-          display_name: displayName.trim(),
+          display_name: name,
         });
+        if (profileError) {
+          // Clean up the auth user so they can try again
+          await supabase.auth.signOut();
+          setLoading(false);
+          if (profileError.code === "23505") {
+            setError("That display name is already taken. Please choose another.");
+          } else {
+            setError(profileError.message);
+          }
+          return;
+        }
       }
 
       if (!data.session) {
@@ -122,8 +131,7 @@ function AuthForm() {
               type="text"
               value={displayName}
               onChange={(e) => setDisplayName(e.target.value)}
-              placeholder="How you'll appear on the leaderboard"
-              required
+              placeholder="How you'll appear on the leaderboard (optional)"
               autoComplete="nickname"
               className="field-input"
             />

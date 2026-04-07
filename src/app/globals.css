@@ -175,6 +175,13 @@ body {
     box-shadow: 0 4px 20px rgba(217, 119, 6, 0.3);
   }
 
+  .btn-gold:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+  }
+
   .btn-outline {
     background: transparent;
     color: var(--foreground);

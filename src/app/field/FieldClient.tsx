@@ -45,7 +45,6 @@ const PICK_MAP: [string, string, string][] = [
   ["liv_golfer",           "LIV",           "⚡"],
   ["past_champ_golfer",    "Past Champ",    "🏆"],
   ["young_guns_golfer",    "Young Guns",    "🌟"],
-  ["free_golfer",          "Free Pick",     "🎰"],
 ];
 
 const COUNTRY_FLAG: Record<string, string> = {
@@ -200,9 +199,11 @@ function PlayerAvatar({ imageUrl, name, flag }: { imageUrl: string | null; name:
 export default function FieldClient({
   golfers: initialGolfers,
   currentRound: initialRound,
+  pickers,
 }: {
   golfers: GolferRow[];
   currentRound: number;
+  pickers: Record<string, string[]>;
 }) {
   const [golfers, setGolfers] = useState<GolferRow[]>(initialGolfers);
   const [currentRound, setCurrentRound] = useState(initialRound);
@@ -211,6 +212,7 @@ export default function FieldClient({
   const [pickedNames, setPickedNames] = useState<PickedNames>({});
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("all");
+  const [openGolfer, setOpenGolfer] = useState<string | null>(null);
 
   // Supabase Realtime — subscribe to golfer_stats changes
   useEffect(() => {
@@ -407,6 +409,8 @@ export default function FieldClient({
           const isActive = golfer.status === "active";
           const pick = pickedNames[golfer.name];
           const rank = positions[golfer.name] ?? "—";
+          const rowPickers = pickers[golfer.golfer_id] ?? [];
+          const isOpen = openGolfer === golfer.golfer_id;
 
           const thruLabel =
             isMC ? "MC" :
@@ -422,74 +426,96 @@ export default function FieldClient({
           return (
             <div
               key={golfer.name}
-              className={`grid grid-cols-[1.5rem_1fr_3rem_3rem_3rem] sm:grid-cols-[2rem_1fr_4.5rem_3.5rem_3.5rem_4rem] gap-x-2 items-center px-3 sm:px-4 py-2.5 ${
-                i < displayed.length - 1 ? "border-b border-[var(--border)]/40" : ""
-              } ${isMC || isWD ? "opacity-40" : ""} ${isActive ? "bg-[var(--accent-light)]/5" : ""}`}
+              className={i < displayed.length - 1 ? "border-b border-[var(--border)]/20" : ""}
             >
-              {/* Rank */}
-              <span className="text-xs tabular-nums text-[var(--muted)] text-center font-medium">
-                {rank}
-              </span>
-
-              {/* Avatar + Name + Pick badge */}
-              <div className="flex items-center gap-1.5 min-w-0">
-                <PlayerAvatar imageUrl={golfer.image_url} name={golfer.name} flag={flag} />
-                <span className={`text-sm font-medium truncate ${isMC || isWD ? "line-through" : ""}`}>
-                  {golfer.name}
+              <button
+                onClick={() => setOpenGolfer(isOpen ? null : golfer.golfer_id)}
+                className={`w-full grid grid-cols-[1.5rem_1fr_3rem_3rem_3rem] sm:grid-cols-[2rem_1fr_4.5rem_3.5rem_3.5rem_4rem] gap-x-2 items-center px-3 sm:px-4 py-2.5 text-left transition-colors hover:bg-white/[0.03] ${
+                  isMC || isWD ? "opacity-40" : ""
+                } ${isActive ? "bg-[var(--accent-light)]/5" : ""} ${isOpen ? "bg-white/[0.04]" : ""}`}
+              >
+                {/* Rank */}
+                <span className="text-xs tabular-nums text-[var(--muted)] text-center font-medium">
+                  {rank}
                 </span>
-                <span className="hidden sm:contents">
-                  {golfer.region === "usa" && (
-                    <span className="badge badge-usa shrink-0">USA</span>
+
+                {/* Avatar + Name + Pick badge */}
+                <div className="flex items-center gap-1.5 min-w-0">
+                  <PlayerAvatar imageUrl={golfer.image_url} name={golfer.name} flag={flag} />
+                  <span className={`text-sm font-medium truncate ${isMC || isWD ? "line-through" : ""}`}>
+                    {golfer.name}
+                  </span>
+                  <span className="hidden sm:contents">
+                    {golfer.region === "usa" && (
+                      <span className="badge badge-usa shrink-0">USA</span>
+                    )}
+                    {golfer.region === "european" && (
+                      <span className="badge badge-european shrink-0">EUR</span>
+                    )}
+                    {golfer.region === "international" && (
+                      <span className="badge badge-international shrink-0">Intl</span>
+                    )}
+                    {golfer.is_liv && (
+                      <span className="badge badge-liv shrink-0">LIV</span>
+                    )}
+                    {golfer.is_longshot && (
+                      <span className="badge badge-longshot shrink-0">Long</span>
+                    )}
+                    {golfer.is_past_champ && (
+                      <span className="badge badge-past-champ shrink-0">Champ</span>
+                    )}
+                    {golfer.is_young_gun && (
+                      <span className="badge badge-young-gun shrink-0">U-25</span>
+                    )}
+                  </span>
+                  {pick && <span className="text-sm leading-none shrink-0">⭐</span>}
+                  {isActive && (
+                    <span className="w-1.5 h-1.5 rounded-full bg-[var(--accent-light)] animate-pulse shrink-0" />
                   )}
-                  {golfer.region === "european" && (
-                    <span className="badge badge-european shrink-0">EUR</span>
-                  )}
-                  {golfer.region === "international" && (
-                    <span className="badge badge-international shrink-0">Intl</span>
-                  )}
-                  {golfer.is_liv && (
-                    <span className="badge badge-liv shrink-0">LIV</span>
-                  )}
-                  {golfer.is_longshot && (
-                    <span className="badge badge-longshot shrink-0">Long</span>
-                  )}
-                  {golfer.is_past_champ && (
-                    <span className="badge badge-past-champ shrink-0">Champ</span>
-                  )}
-                  {golfer.is_young_gun && (
-                    <span className="badge badge-young-gun shrink-0">U-25</span>
-                  )}
+                </div>
+
+                {/* Tee time */}
+                <span className={`text-xs tabular-nums text-center hidden sm:block ${
+                  sort === "thru" ? "text-[var(--foreground)]" : "text-[var(--muted)]"
+                }`}>
+                  {golfer.teeTime ? formatTeeTime(golfer.teeTime) : "TBD"}
                 </span>
-                {pick && <span className="text-sm leading-none shrink-0">⭐</span>}
-                {isActive && (
-                  <span className="w-1.5 h-1.5 rounded-full bg-[var(--accent-light)] animate-pulse shrink-0" />
-                )}
-              </div>
 
-              {/* Tee time */}
-              <span className={`text-xs tabular-nums text-center hidden sm:block ${
-                sort === "thru" ? "text-[var(--foreground)]" : "text-[var(--muted)]"
-              }`}>
-                {golfer.teeTime ? formatTeeTime(golfer.teeTime) : "TBD"}
-              </span>
+                {/* Round score */}
+                <span className={`text-sm tabular-nums text-center ${
+                  isMC || isWD ? "text-[var(--muted)]" :
+                  sort === "round" ? "font-bold text-[var(--foreground)]" : "text-[var(--muted-light)]"
+                }`}>
+                  {isMC || isWD ? "—" : golfer.roundScore != null ? golfer.roundScore : "TBD"}
+                </span>
 
-              {/* Round score */}
-              <span className={`text-sm tabular-nums text-center ${
-                isMC || isWD ? "text-[var(--muted)]" :
-                sort === "round" ? "font-bold text-[var(--foreground)]" : "text-[var(--muted-light)]"
-              }`}>
-                {isMC || isWD ? "—" : golfer.roundScore != null ? golfer.roundScore : "TBD"}
-              </span>
+                {/* Total score */}
+                <span className={`text-sm font-bold tabular-nums text-center ${scoreCls(golfer.score, golfer.status)}`}>
+                  {isMC ? "MC" : isWD ? "WD" : scoreText(golfer.score)}
+                </span>
 
-              {/* Total score */}
-              <span className={`text-sm font-bold tabular-nums text-center ${scoreCls(golfer.score, golfer.status)}`}>
-                {isMC ? "MC" : isWD ? "WD" : scoreText(golfer.score)}
-              </span>
+                {/* Thru */}
+                <span className={`text-xs tabular-nums text-right ${thruCls}`}>
+                  {thruLabel}
+                </span>
+              </button>
 
-              {/* Thru */}
-              <span className={`text-xs tabular-nums text-right ${thruCls}`}>
-                {thruLabel}
-              </span>
+              {/* Pickers dropdown */}
+              {isOpen && (
+                <div className="px-4 pb-2.5 pt-1 border-t border-[var(--border)]/20 bg-white/[0.02]">
+                  {rowPickers.length === 0 ? (
+                    <p className="text-xs text-[var(--muted)] italic">No one has picked this player.</p>
+                  ) : (
+                    <div className="flex flex-wrap gap-1.5">
+                      {rowPickers.map((name) => (
+                        <span key={name} className="text-xs bg-white/[0.07] text-[var(--foreground)] px-2 py-0.5 rounded-full">
+                          {name}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           );
         })}

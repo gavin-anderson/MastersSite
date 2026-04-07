@@ -44,12 +44,6 @@ const CATEGORIES = [
     color: "badge-young-gun",
     rules: "Pick a golfer under 25 years old at the time of the tournament.",
   },
-  {
-    emoji: "🎰",
-    label: "Free Pick",
-    color: "badge-longshot",
-    rules: "Pick any golfer in the field — your wildcard slot.",
-  },
 ];
 
 const STEPS = [
@@ -66,12 +60,12 @@ const STEPS = [
   {
     num: "3",
     title: "Make Your Picks",
-    body: "Select one golfer from each of the eight categories before the tournament begins.",
+    body: "Select one golfer from each of the seven categories before the tournament begins.",
   },
   {
     num: "4",
     title: "Follow the Action",
-    body: "Scores update automatically every 10 minutes throughout the tournament.",
+    body: "Scores update automatically every 60 seconds throughout the tournament.",
   },
 ];
 
@@ -92,7 +86,7 @@ export default function HowItWorksPage() {
           <Link href="/picks" className="btn-primary">
             Make Your Picks
           </Link>
-          <Link href="/golfers" className="btn-outline">
+          <Link href="/field" className="btn-outline">
             View Field
           </Link>
         </div>
@@ -118,9 +112,9 @@ export default function HowItWorksPage() {
 
       {/* The Five Categories */}
       <section className="space-y-3">
-        <h2 className="text-lg font-bold tracking-tight">The Eight Categories</h2>
+        <h2 className="text-lg font-bold tracking-tight">The Seven Categories</h2>
         <p className="text-sm text-[var(--muted)]">
-          You must pick exactly one golfer from each category. All eight picks are required to enter.
+          You must pick exactly one golfer from each category. All seven picks are required to enter.
         </p>
         <div className="space-y-2">
           {CATEGORIES.map((cat) => (
@@ -198,7 +192,7 @@ export default function HowItWorksPage() {
             <div>
               <p className="font-semibold text-sm">Live Score Updates</p>
               <p className="text-sm text-[var(--muted)] leading-relaxed mt-0.5">
-                Scores sync automatically from the ESPN live feed every 10 minutes throughout the tournament.
+                Scores sync automatically from the ESPN live feed every 60 seconds throughout the tournament.
                 No manual updates needed.
               </p>
             </div>

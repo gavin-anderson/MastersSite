@@ -15,13 +15,12 @@ export async function GET() {
   const { data, error } = await supabase
     .from("picks")
     .select(`
-      usa_pick, european_pick, international_pick, longshot_pick, liv_pick, free_pick, past_champ_pick, young_guns_pick,
+      usa_pick, european_pick, international_pick, longshot_pick, liv_pick, past_champ_pick, young_guns_pick,
       usa_golfer:golfers!picks_usa_pick_fkey(name),
       european_golfer:golfers!picks_european_pick_fkey(name),
       international_golfer:golfers!picks_asian_pick_fkey(name),
       longshot_golfer:golfers!picks_longshot_pick_fkey(name),
       liv_golfer:golfers!picks_liv_pick_fkey(name),
-      free_golfer:golfers!picks_free_pick_fkey(name),
       past_champ_golfer:golfers!picks_past_champ_pick_fkey(name),
       young_guns_golfer:golfers!picks_young_guns_pick_fkey(name)
     `)
@@ -85,7 +84,6 @@ export async function POST(request: NextRequest) {
     international_pick: body.international_pick ?? null,
     longshot_pick: body.longshot_pick ?? null,
     liv_pick: body.liv_pick ?? null,
-    free_pick: body.free_pick ?? null,
     past_champ_pick: body.past_champ_pick ?? null,
     young_guns_pick: body.young_guns_pick ?? null,
   });

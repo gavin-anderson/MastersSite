@@ -1,8 +1,14 @@
 import { createClient } from "@/lib/supabase/server";
+import { createClient as createServiceClient } from "@supabase/supabase-js";
 import { TOURNAMENT_YEAR } from "@/types";
 import FieldClient, { GolferRow } from "./FieldClient";
 
 export const revalidate = 60;
+
+const PICK_COLS = [
+  "usa_pick", "european_pick", "international_pick",
+  "longshot_pick", "liv_pick", "past_champ_pick", "young_guns_pick",
+];
 
 export default async function FieldPage() {
   const supabase = await createClient();
@@ -43,6 +49,35 @@ export default async function FieldPage() {
 
   const currentRound = (stats ?? []).reduce((max, s) => Math.max(max, s.round ?? 1), 1);
 
+  // Build pickers map: golfer_id → [display_name, ...]
+  const service = createServiceClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  );
+  const { data: picks } = await service
+    .from("picks")
+    .select(`user_id, ${PICK_COLS.join(", ")}`)
+    .eq("year", TOURNAMENT_YEAR);
+
+  const userIds = (picks ?? []).map((p) => p.user_id);
+  const { data: profiles } = userIds.length
+    ? await service.from("profiles").select("id, display_name").in("id", userIds)
+    : { data: [] };
+  const profileMap = Object.fromEntries((profiles ?? []).map((p: { id: string; display_name: string }) => [p.id, p.display_name]));
+
+  const pickers: Record<string, string[]> = {};
+  for (const pick of picks ?? []) {
+    const displayName = profileMap[pick.user_id];
+    if (!displayName) continue;
+    for (const col of PICK_COLS) {
+      const golferId = pick[col];
+      if (golferId) {
+        if (!pickers[golferId]) pickers[golferId] = [];
+        pickers[golferId].push(displayName);
+      }
+    }
+  }
+
   const rows: GolferRow[] = golfers.map((g) => {
     const id = idByName[g.name];
     const stat = id ? statById[id] : null;
@@ -82,7 +117,7 @@ export default async function FieldPage() {
         </p>
       </div>
 
-      <FieldClient golfers={rows} currentRound={currentRound} />
+      <FieldClient golfers={rows} currentRound={currentRound} pickers={pickers} />
 
       <p className="text-xs text-[var(--muted)] text-center pb-2">
         Updates every 60 seconds · All times Eastern

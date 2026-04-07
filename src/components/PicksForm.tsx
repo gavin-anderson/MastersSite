@@ -197,8 +197,6 @@ export default function PicksForm({
         filtered = golfers.filter((g) => g.is_young_gun);
       } else if (cat.region === "international") {
         filtered = golfers.filter((g) => g.region !== "usa" && g.region !== "european");
-      } else if (cat.region === "free") {
-        filtered = [...golfers];
       } else {
         filtered = golfers.filter((g) => g.region === cat.region);
       }
@@ -269,9 +267,7 @@ export default function PicksForm({
                 : "Picks lock when the tournament begins"}
             </p>
           </div>
-          {locked ? (
-            <span className="text-xs text-[var(--gold-light)] font-medium">🔒 Locked</span>
-          ) : (
+          {!locked && (
             <button
               onClick={() => setMode("editing")}
               className="btn-outline flex items-center gap-2 text-sm py-2 px-4"
@@ -372,9 +368,13 @@ export default function PicksForm({
                         value={golfer.id}
                         checked={isSelected}
                         disabled={takenElsewhere}
-                        onChange={() =>
+                        onChange={() => {}}
+                        onClick={() =>
                           !takenElsewhere &&
-                          setPicks((prev) => ({ ...prev, [cat.key]: golfer.id }))
+                          setPicks((prev) => ({
+                            ...prev,
+                            [cat.key]: isSelected ? "" : golfer.id,
+                          }))
                         }
                         className="sr-only"
                       />
@@ -430,9 +430,11 @@ export default function PicksForm({
       })}
 
       <div className="flex items-center gap-3 flex-wrap">
-        <button type="submit" disabled={locked || saving || !allSelected} className="btn-gold">
-          {saving ? "Saving…" : "Save Picks"}
-        </button>
+        {!locked && (
+          <button type="submit" disabled={saving || !allSelected} className="btn-gold">
+            {saving ? "Saving…" : "Save Picks"}
+          </button>
+        )}
         {hasPicks && (
           <button type="button" onClick={() => setMode("roster")} className="btn-outline">
             Cancel

@@ -22,7 +22,6 @@ const CATEGORY_MAP: Record<string, { icon: ReactNode; label: string }> = {
   liv:           { icon: "⚡", label: "LIV" },
   past_champ:    { icon: "🏆", label: "Past Champ" },
   young_gun:     { icon: "🌟", label: "Young Guns" },
-  free:          { icon: "🎰", label: "Free Pick" },
 };
 
 function getScoreDisplay(score: number | null, status?: string) {
@@ -43,13 +42,14 @@ interface GolferScore {
 
 export interface RankedEntry {
   id: string;
+  userId: string;
   displayName: string;
   totalScore: number;
   allNoScore: boolean;
   golferScores: GolferScore[];
 }
 
-function LeaderboardRow({ entry, rank }: { entry: RankedEntry; rank: number }) {
+function LeaderboardRow({ entry, rank, canExpand }: { entry: RankedEntry; rank: number; canExpand: boolean }) {
   const [open, setOpen] = useState(false);
 
   const rankCls =
@@ -63,23 +63,25 @@ function LeaderboardRow({ entry, rank }: { entry: RankedEntry; rank: number }) {
   return (
     <div className="glass-card overflow-hidden">
       <button
-        onClick={() => setOpen((o) => !o)}
-        className="w-full flex items-center gap-3 p-4 text-left"
+        onClick={() => canExpand && setOpen((o) => !o)}
+        className={`w-full flex items-center gap-3 p-4 text-left ${canExpand ? "" : "cursor-default"}`}
       >
         <div className={rankCls}>{rank}</div>
         <p className="font-semibold flex-1 min-w-0 truncate">{entry.displayName}</p>
         <div className={`text-lg font-bold tabular-nums shrink-0 ${entry.allNoScore ? "text-[var(--muted)]" : totalDisplay.cls}`}>
           {entry.allNoScore ? "0" : totalDisplay.text}
         </div>
-        <svg
-          className={`shrink-0 text-[var(--muted)] transition-transform duration-200 ${open ? "rotate-180" : ""}`}
-          width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"
-        >
-          <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-        </svg>
+        {canExpand && (
+          <svg
+            className={`shrink-0 text-[var(--muted)] transition-transform duration-200 ${open ? "rotate-180" : ""}`}
+            width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+          </svg>
+        )}
       </button>
 
-      {open && (
+      {canExpand && open && (
         <div className="border-t border-[var(--border)] px-4 pb-3 pt-2 space-y-1">
           {entry.golferScores.map(({ golfer, score, stat, categoryKey }, j) => {
             const cat = CATEGORY_MAP[categoryKey] ?? { emoji: "🏌️", label: categoryKey };
@@ -110,9 +112,13 @@ function LeaderboardRow({ entry, rank }: { entry: RankedEntry; rank: number }) {
 export default function LeaderboardClient({
   ranked: initialRanked,
   initialStats,
+  picksLocked,
+  currentUserId,
 }: {
   ranked: RankedEntry[];
   initialStats: Record<string, StatRow>;
+  picksLocked: boolean;
+  currentUserId: string | null;
 }) {
   const [statsMap, setStatsMap] = useState<Record<string, StatRow>>(initialStats);
 
@@ -156,7 +162,12 @@ export default function LeaderboardClient({
   return (
     <div className="space-y-2">
       {ranked.map((entry, i) => (
-        <LeaderboardRow key={entry.id} entry={entry} rank={i + 1} />
+        <LeaderboardRow
+          key={entry.id}
+          entry={entry}
+          rank={i + 1}
+          canExpand={picksLocked || entry.userId === currentUserId}
+        />
       ))}
     </div>
   );

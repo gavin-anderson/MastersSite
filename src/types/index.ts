@@ -1,4 +1,4 @@
-export type GolferRegion = "usa" | "european" | "international" | "longshot" | "liv" | "young_gun" | "past_champ" | "free";
+export type GolferRegion = "usa" | "european" | "international" | "longshot" | "liv" | "young_gun" | "past_champ";
 
 export interface Golfer {
   id: string;
@@ -46,7 +46,6 @@ export interface Picks {
   international_pick: string | null;
   longshot_pick: string | null;
   liv_pick: string | null;
-  free_pick: string | null;
   past_champ_pick: string | null;
   young_guns_pick: string | null;
   submitted_at: string;
@@ -120,13 +119,6 @@ export const PICK_CATEGORIES: {
     region: "young_gun",
     description: "A golfer under 25 years old",
     emoji: "⚡",
-  },
-  {
-    key: "free_pick",
-    label: "Free Pick",
-    region: "free",
-    description: "Any golfer in the field",
-    emoji: "🎰",
   },
 ];
 
