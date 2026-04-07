@@ -146,6 +146,10 @@ export default function PicksForm({
 
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [openCategory, setOpenCategory] = useState<string | null>(
+    // Open the first unpicked category by default
+    PICK_CATEGORIES.find((cat) => !existingPicks?.[cat.key])?.key ?? null
+  );
   const [liveStats, setLiveStats] = useState<Record<string, StatRow>>(stats);
 
   useEffect(() => {
@@ -311,117 +315,136 @@ export default function PicksForm({
 
   // ── Selection form ──────────────────────────────────────────
   return (
-    <form onSubmit={handleSubmit} className="space-y-3">
+    <form onSubmit={handleSubmit} className="space-y-2">
       {PICK_CATEGORIES.map((cat) => {
         const options = golfersByCategory[cat.key] ?? [];
         const selected = picks[cat.key];
         const selectedGolfer = golfers.find((g) => g.id === selected);
+        const isOpen = openCategory === cat.key;
 
         return (
-          <div key={cat.key} className="glass-card p-5 space-y-3">
-            <div className="flex items-center gap-2">
+          <div key={cat.key} className="glass-card overflow-hidden">
+            {/* Accordion header — always visible */}
+            <button
+              type="button"
+              onClick={() => setOpenCategory(isOpen ? null : cat.key)}
+              className="w-full flex items-center gap-3 px-4 py-3 text-left"
+            >
               <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-[var(--border)] bg-white/5">
                 {CATEGORY_ICON[cat.region] ?? <span className="text-base">{cat.emoji}</span>}
               </span>
-              <div>
-                <h3 className="font-semibold text-sm">{cat.label}</h3>
-                <p className="text-xs text-[var(--muted)]">{cat.description}</p>
+              <div className="flex-1 min-w-0">
+                <p className="font-semibold text-sm">{cat.label}</p>
+                <p className="text-xs truncate mt-0.5">
+                  {selectedGolfer
+                    ? <span className="text-[var(--accent-light)]">{selectedGolfer.name}{selectedGolfer.odds ? ` · ${formatOdds(selectedGolfer.odds)}` : ""}</span>
+                    : <span className="text-[var(--muted)]">{cat.description}</span>
+                  }
+                </p>
               </div>
-              {selectedGolfer && (
-                <div className="ml-auto text-right">
-                  <p className="text-sm font-medium text-[var(--accent-light)]">
-                    {selectedGolfer.name}
-                  </p>
-                  <p className="text-xs text-[var(--muted)]">
-                    {selectedGolfer.country}
-                    {selectedGolfer.odds ? ` · ${formatOdds(selectedGolfer.odds)}` : ""}
-                  </p>
-                </div>
+              {selectedGolfer && !isOpen && (
+                <span className="w-2 h-2 rounded-full bg-[var(--accent)] shrink-0" />
               )}
-            </div>
+              <svg
+                className={`shrink-0 text-[var(--muted)] transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`}
+                width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
 
-            {options.length === 0 ? (
-              <p className="text-xs text-[var(--muted)] italic">
-                No golfers available in this category yet.
-              </p>
-            ) : (
-              <div className="grid gap-1.5 max-h-44 overflow-y-auto pr-1">
-                {options.map((golfer) => {
-                  const isSelected = picks[cat.key] === golfer.id;
-                  const takenElsewhere = !isSelected && pickedIds.has(golfer.id);
+            {/* Expandable golfer list */}
+            {isOpen && (
+              <div className="border-t border-[var(--border)] px-4 pb-3 pt-2">
+                {options.length === 0 ? (
+                  <p className="text-xs text-[var(--muted)] italic py-2">
+                    No golfers available in this category yet.
+                  </p>
+                ) : (
+                  <div className="grid gap-1.5 max-h-56 overflow-y-auto pr-1 pt-1">
+                    {options.map((golfer) => {
+                      const isSelected = picks[cat.key] === golfer.id;
+                      const takenElsewhere = !isSelected && pickedIds.has(golfer.id);
 
-                  return (
-                    <label
-                      key={golfer.id}
-                      className={`flex items-center gap-3 p-3 rounded-lg border transition-all ${
-                        takenElsewhere
-                          ? "opacity-30 cursor-not-allowed border-[var(--border)]"
-                          : isSelected
-                          ? "border-[var(--accent)] bg-[rgba(22,163,74,0.1)] cursor-pointer"
-                          : "border-[var(--border)] hover:border-[var(--border-strong)] hover:bg-white/[0.03] cursor-pointer"
-                      }`}
-                    >
-                      <input
-                        type="radio"
-                        name={cat.key}
-                        value={golfer.id}
-                        checked={isSelected}
-                        disabled={takenElsewhere}
-                        onChange={() => {}}
-                        onClick={() =>
-                          !takenElsewhere &&
-                          setPicks((prev) => ({
-                            ...prev,
-                            [cat.key]: isSelected ? "" : golfer.id,
-                          }))
-                        }
-                        className="sr-only"
-                      />
-                      <div
-                        className={`w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors ${
-                          isSelected
-                            ? "border-[var(--accent)] bg-[var(--accent)]"
-                            : "border-[var(--border-strong)]"
-                        }`}
-                      >
-                        {isSelected && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-1.5">
-                          <p className="font-medium text-sm">{golfer.name}</p>
-                          {takenElsewhere && (
-                            <span className="text-[10px] text-[var(--muted)] italic">already picked</span>
-                          )}
-                        </div>
-                        <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
-                          <span className="text-xs text-[var(--muted)]">{golfer.country}</span>
-                          {REGION_BADGE[golfer.region] && cat.region !== golfer.region && (
-                            <span className={`badge ${REGION_BADGE[golfer.region]}`}>
-                              {REGION_LABEL[golfer.region]}
+                      return (
+                        <label
+                          key={golfer.id}
+                          className={`flex items-center gap-3 p-3 rounded-lg border transition-all ${
+                            takenElsewhere
+                              ? "opacity-30 cursor-not-allowed border-[var(--border)]"
+                              : isSelected
+                              ? "border-[var(--accent)] bg-[rgba(22,163,74,0.1)] cursor-pointer"
+                              : "border-[var(--border)] hover:border-[var(--border-strong)] hover:bg-white/[0.03] cursor-pointer"
+                          }`}
+                        >
+                          <input
+                            type="radio"
+                            name={cat.key}
+                            value={golfer.id}
+                            checked={isSelected}
+                            disabled={takenElsewhere}
+                            onChange={() => {}}
+                            onClick={() => {
+                              if (takenElsewhere) return;
+                              const selecting = !isSelected;
+                              setPicks((prev) => ({ ...prev, [cat.key]: selecting ? golfer.id : "" }));
+                              if (selecting) {
+                                // Auto-advance to next unpicked category
+                                const nextCat = PICK_CATEGORIES.find(
+                                  (c) => c.key !== cat.key && !picks[c.key]
+                                );
+                                setOpenCategory(nextCat?.key ?? null);
+                              }
+                            }}
+                            className="sr-only"
+                          />
+                          <div
+                            className={`w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors ${
+                              isSelected
+                                ? "border-[var(--accent)] bg-[var(--accent)]"
+                                : "border-[var(--border-strong)]"
+                            }`}
+                          >
+                            {isSelected && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-1.5">
+                              <p className="font-medium text-sm">{golfer.name}</p>
+                              {takenElsewhere && (
+                                <span className="text-[10px] text-[var(--muted)] italic">already picked</span>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
+                              <span className="text-xs text-[var(--muted)]">{golfer.country}</span>
+                              {REGION_BADGE[golfer.region] && cat.region !== golfer.region && (
+                                <span className={`badge ${REGION_BADGE[golfer.region]}`}>
+                                  {REGION_LABEL[golfer.region]}
+                                </span>
+                              )}
+                              {golfer.is_liv && cat.region !== "liv" && (
+                                <span className="badge badge-liv">LIV</span>
+                              )}
+                              {golfer.is_longshot && cat.region !== "longshot" && (
+                                <span className="badge badge-longshot">Longshot</span>
+                              )}
+                              {golfer.is_past_champ && cat.region !== "past_champ" && (
+                                <span className="badge badge-past-champ">Champ</span>
+                              )}
+                              {golfer.is_young_gun && cat.region !== "young_gun" && (
+                                <span className="badge badge-young-gun">U-30</span>
+                              )}
+                            </div>
+                          </div>
+                          {golfer.odds && (
+                            <span className="text-xs text-[var(--gold-light)] font-semibold shrink-0">
+                              {formatOdds(golfer.odds)}
                             </span>
                           )}
-                          {golfer.is_liv && cat.region !== "liv" && (
-                            <span className="badge badge-liv">LIV</span>
-                          )}
-                          {golfer.is_longshot && cat.region !== "longshot" && (
-                            <span className="badge badge-longshot">Longshot</span>
-                          )}
-                          {golfer.is_past_champ && cat.region !== "past_champ" && (
-                            <span className="badge badge-past-champ">Champ</span>
-                          )}
-                          {golfer.is_young_gun && cat.region !== "young_gun" && (
-                            <span className="badge badge-young-gun">U-30</span>
-                          )}
-                        </div>
-                      </div>
-                      {golfer.odds && (
-                        <span className="text-xs text-[var(--gold-light)] font-semibold shrink-0">
-                          {formatOdds(golfer.odds)}
-                        </span>
-                      )}
-                    </label>
-                  );
-                })}
+                        </label>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
             )}
           </div>

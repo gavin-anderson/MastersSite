@@ -366,7 +366,7 @@ export default function FieldClient({
       {/* Table */}
       <div className="glass-card overflow-hidden">
         {/* Header row */}
-        <div className="grid grid-cols-[1.5rem_1fr_3rem_3rem_3rem] sm:grid-cols-[2rem_1fr_4.5rem_3.5rem_3.5rem_4rem] gap-x-2 items-center px-3 sm:px-4 py-2 border-b border-[var(--border)] bg-white/[0.03]">
+        <div className="grid grid-cols-[1.5rem_1fr_3rem_3rem_3rem] sm:grid-cols-[2rem_1fr_4.5rem_3.5rem_3.5rem_4rem] gap-x-2 items-center px-3 sm:px-4 py-2 bg-white/[0.03]">
           <span className="text-[10px] font-semibold uppercase tracking-wider text-[var(--muted)] text-center">#</span>
           <span className="text-[10px] font-semibold uppercase tracking-wider text-[var(--muted)]">Player</span>
           <button
@@ -426,7 +426,7 @@ export default function FieldClient({
           return (
             <div
               key={golfer.name}
-              className={i < displayed.length - 1 ? "border-b border-[var(--border)]/20" : ""}
+              className={i < displayed.length - 1 ? "border-b border-gray-700/50" : ""}
             >
               <button
                 onClick={() => setOpenGolfer(isOpen ? null : golfer.golfer_id)}
@@ -502,9 +502,14 @@ export default function FieldClient({
 
               {/* Pickers dropdown */}
               {isOpen && (
-                <div className="px-4 pb-2.5 pt-1 border-t border-[var(--border)]/20 bg-white/[0.02]">
+                <div className="px-4 pb-3 pt-2 border-t border-gray-700/50 bg-white/[0.02]">
                   {rowPickers.length === 0 ? (
-                    <p className="text-xs text-[var(--muted)] italic">No one has picked this player.</p>
+                    <div className="flex items-center gap-2 text-[var(--muted)]">
+                      <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" />
+                      </svg>
+                      <span className="text-xs">Not picked by anyone</span>
+                    </div>
                   ) : (
                     <div className="flex flex-wrap gap-1.5">
                       {rowPickers.map((name) => (
