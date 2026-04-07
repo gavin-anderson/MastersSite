@@ -74,7 +74,7 @@ function RosterStat({ stat, odds }: { stat?: StatRow; odds: number | null }) {
     return (
       <div className="text-right shrink-0">
         <p className="text-xs font-bold score-over">MC</p>
-        <p className="text-[10px] text-[var(--muted)]">+10 penalty</p>
+        <p className="text-[10px] text-[var(--muted)]">not counted</p>
       </div>
     );
   }

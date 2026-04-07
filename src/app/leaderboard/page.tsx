@@ -5,8 +5,6 @@ import LeaderboardClient, { RankedEntry } from "@/components/LeaderboardClient";
 
 export const dynamic = "force-dynamic";
 
-const MISS_CUT_PENALTY = 10;
-
 const GOLFER_KEYS: Array<[string, string, string]> = [
   ["usa_pick",      "usa_golfer",      "usa"],
   ["european_pick", "european_golfer", "european"],
@@ -72,7 +70,7 @@ export default async function LeaderboardPage() {
         } | null;
         const stat = golferId ? statsMap[golferId] : null;
         const isCut = stat?.status === "mc" || stat?.status === "cut";
-        const score = isCut ? MISS_CUT_PENALTY : (stat?.score ?? null);
+        const score = isCut ? null : (stat?.score ?? null);
         return { golfer, score, stat, categoryKey };
       });
 
@@ -110,7 +108,7 @@ export default async function LeaderboardPage() {
       )}
 
       <p className="text-xs text-[var(--muted)] text-center">
-        Scoring: combined score relative to par · Miss cut = +{MISS_CUT_PENALTY} penalty
+        Scoring: combined score relative to par · Missed cut (MC) scores are not counted
       </p>
     </div>
   );

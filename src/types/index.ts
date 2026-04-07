@@ -99,7 +99,7 @@ export const PICK_CATEGORIES: {
     key: "longshot_pick",
     label: "Longshot",
     region: "longshot",
-    description: "A golfer with 100-1 or greater odds",
+    description: "A golfer with pre-tournament odds over +10000",
     emoji: "🎯",
   },
   {

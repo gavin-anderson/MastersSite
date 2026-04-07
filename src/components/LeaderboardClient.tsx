@@ -2,8 +2,6 @@
 
 import { useState } from "react";
 
-const MISS_CUT_PENALTY = 10;
-
 const CATEGORY_MAP: Record<string, { emoji: string; label: string }> = {
   usa:      { emoji: "🇺🇸", label: "American" },
   european: { emoji: "🇪🇺", label: "European" },
@@ -15,7 +13,7 @@ const CATEGORY_MAP: Record<string, { emoji: string; label: string }> = {
 
 function getScoreDisplay(score: number | null, status?: string) {
   if (status === "mc" || status === "cut")
-    return { text: `+${MISS_CUT_PENALTY} (MC)`, cls: "score-over" };
+    return { text: "MC", cls: "text-[var(--muted)]" };
   if (score === null) return { text: "-", cls: "text-[var(--muted)]" };
   if (score < 0) return { text: `${score}`, cls: "score-under" };
   if (score > 0) return { text: `+${score}`, cls: "score-over" };

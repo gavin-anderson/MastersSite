@@ -4,7 +4,7 @@ import { createClient } from "@supabase/supabase-js";
 // This endpoint is called by Vercel Cron every 10 minutes during the tournament.
 // It fetches the Masters leaderboard from ESPN's unofficial API and syncs scores.
 
-const MASTERS_EVENT_ID = "401703504"; // 2025 Masters — update each year
+const MASTERS_EVENT_ID = "401811941"; // 2026 Masters — update each year
 const ESPN_URL = `https://site.web.api.espn.com/apis/site/v2/sports/golf/leaderboard?league=pga&event=${MASTERS_EVENT_ID}`;
 
 // Country → region mapping (expand as needed)
@@ -44,6 +44,7 @@ const COUNTRY_REGION: Record<string, string> = {
   "Puerto Rico": "usa",
   Austria: "european",
   Netherlands: "european",
+  Finland: "european",
   "Cayman Islands": "other",
 };
 
@@ -54,19 +55,16 @@ function getGeographicRegion(country: string): string {
 // LIV golfers who also play at the Masters (update annually)
 const LIV_GOLFERS = new Set([
   "Dustin Johnson",
-  "Phil Mickelson",
   "Bryson DeChambeau",
   "Patrick Reed",
-  "Abraham Ancer",
-  "Sergio Garcia",
-  "Louis Oosthuizen",
+  "Sergio García",
   "Charl Schwartzel",
-  "Talor Gooch",
   "Brooks Koepka",
+  "Tyrrell Hatton",
+  "Carlos Ortiz",
+  "Nico Echavarria",
   "Cameron Smith",
-  "Harold Varner III",
-  "Kevin Na",
-  "Hideki Matsuyama", // not LIV but example
+  "Jon Rahm",
 ]);
 
 export async function GET(request: Request) {

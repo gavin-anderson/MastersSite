@@ -24,7 +24,7 @@ const CATEGORIES = [
     emoji: "🎯",
     label: "Longshot",
     color: "badge-longshot",
-    rules: "Pick a golfer with pre-tournament odds of 100-1 or greater. High risk, high reward.",
+    rules: "Pick a golfer with pre-tournament odds of over +10000. High risk, high reward.",
   },
   {
     emoji: "⚡",
@@ -139,18 +139,6 @@ export default function HowItWorksPage() {
                 <span className="score-under">green</span>, over par in{" "}
                 <span className="score-over">red</span>.{" "}
                 <strong className="text-[var(--foreground)]">Lowest score wins.</strong>
-              </p>
-            </div>
-          </div>
-
-          <div className="glass-card-sm px-4 py-3 flex items-start gap-3">
-            <span className="text-xl shrink-0">✂️</span>
-            <div>
-              <p className="font-semibold text-sm">Missed Cut Penalty · <span className="score-over">+10</span></p>
-              <p className="text-sm text-[var(--muted)] leading-relaxed mt-0.5">
-                If one of your golfers misses the cut, they add{" "}
-                <span className="score-over font-bold">+10</span> strokes to your total. Choose carefully —
-                a missed cut can be the difference between first and last place.
               </p>
             </div>
           </div>
