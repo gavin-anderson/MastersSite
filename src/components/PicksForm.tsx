@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Golfer, Picks, PICK_CATEGORIES } from "@/types";
@@ -34,20 +34,21 @@ interface PicksFormProps {
 const REGION_LABEL: Record<string, string> = {
   usa: "USA",
   european: "Europe",
-  asian: "Asia",
+  international: "Intl",
   longshot: "Longshot",
   liv: "LIV",
-  senior: "Fossil",
-  other: "Intl",
+  past_champ: "Champ",
+  young_gun: "U-25",
 };
 
 const REGION_BADGE: Record<string, string> = {
   usa: "badge-usa",
   european: "badge-european",
-  asian: "badge-asian",
+  international: "badge-international",
   longshot: "badge-longshot",
   liv: "badge-liv",
-  senior: "badge-senior",
+  past_champ: "badge-past-champ",
+  young_gun: "badge-young-gun",
 };
 
 function formatOdds(odds: number | null): string {
@@ -131,46 +132,55 @@ export default function PicksForm({
   const router = useRouter();
   const supabase = createClient();
 
-  const hasPicks = !!(
-    existingPicks?.usa_pick &&
-    existingPicks?.european_pick &&
-    existingPicks?.asian_pick &&
-    existingPicks?.longshot_pick &&
-    existingPicks?.liv_pick &&
-    existingPicks?.senior_pick
-  );
+  const hasPicks = PICK_CATEGORIES.every((cat) => !!(existingPicks?.[cat.key]));
 
   const [mode, setMode] = useState<"roster" | "editing">(
     hasPicks || locked ? "roster" : "editing"
   );
 
-  const [picks, setPicks] = useState<Record<string, string>>({
-    usa_pick: existingPicks?.usa_pick ?? "",
-    european_pick: existingPicks?.european_pick ?? "",
-    asian_pick: existingPicks?.asian_pick ?? "",
-    longshot_pick: existingPicks?.longshot_pick ?? "",
-    liv_pick: existingPicks?.liv_pick ?? "",
-    senior_pick: existingPicks?.senior_pick ?? "",
-  });
+  const [picks, setPicks] = useState<Record<string, string>>(
+    Object.fromEntries(
+      PICK_CATEGORIES.map((cat) => [cat.key, existingPicks?.[cat.key] ?? ""])
+    )
+  );
 
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Filter golfers per category using flag-based approach
-  const golfersByCategory = PICK_CATEGORIES.reduce<Record<string, Golfer[]>>((acc, cat) => {
-    if (cat.region === "longshot") {
-      acc[cat.region] = golfers.filter((g) => g.is_longshot);
-    } else if (cat.region === "liv") {
-      acc[cat.region] = golfers.filter((g) => g.is_liv);
-    } else if (cat.region === "senior") {
-      acc[cat.region] = golfers.filter((g) => g.is_senior);
-    } else {
-      acc[cat.region] = golfers.filter((g) => g.region === cat.region);
-    }
-    return acc;
-  }, {});
+  // Set of golfer IDs already picked in any category
+  const pickedIds = useMemo(
+    () => new Set(Object.values(picks).filter(Boolean)),
+    [picks]
+  );
 
-  const golferMap = Object.fromEntries(golfers.map((g) => [g.id, g]));
+  // Filter golfers per category
+  const golfersByCategory = useMemo(() =>
+    PICK_CATEGORIES.reduce<Record<string, Golfer[]>>((acc, cat) => {
+      if (cat.region === "longshot") {
+        acc[cat.key] = golfers.filter((g) => g.is_longshot);
+      } else if (cat.region === "liv") {
+        acc[cat.key] = golfers.filter((g) => g.is_liv);
+      } else if (cat.region === "past_champ") {
+        acc[cat.key] = golfers.filter((g) => g.is_past_champ);
+      } else if (cat.region === "young_gun") {
+        acc[cat.key] = golfers.filter((g) => g.is_young_gun);
+      } else if (cat.region === "international") {
+        acc[cat.key] = golfers.filter((g) => g.region !== "usa" && g.region !== "european");
+      } else if (cat.region === "free") {
+        acc[cat.key] = golfers;
+      } else {
+        acc[cat.key] = golfers.filter((g) => g.region === cat.region);
+      }
+      return acc;
+    }, {}),
+    [golfers]
+  );
+
+  const golferMap = useMemo(
+    () => Object.fromEntries(golfers.map((g) => [g.id, g])),
+    [golfers]
+  );
+
   const allSelected = PICK_CATEGORIES.every((c) => picks[c.key]);
 
   async function handleSubmit(e: React.FormEvent) {
@@ -184,12 +194,9 @@ export default function PicksForm({
       {
         user_id: userId,
         year,
-        usa_pick: picks.usa_pick || null,
-        european_pick: picks.european_pick || null,
-        asian_pick: picks.asian_pick || null,
-        longshot_pick: picks.longshot_pick || null,
-        liv_pick: picks.liv_pick || null,
-        senior_pick: picks.senior_pick || null,
+        ...Object.fromEntries(
+          PICK_CATEGORIES.map((cat) => [cat.key, picks[cat.key] || null])
+        ),
       },
       { onConflict: "user_id,year" }
     );
@@ -279,7 +286,7 @@ export default function PicksForm({
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
       {PICK_CATEGORIES.map((cat) => {
-        const options = golfersByCategory[cat.region] ?? [];
+        const options = golfersByCategory[cat.key] ?? [];
         const selected = picks[cat.key];
         const selectedGolfer = golfers.find((g) => g.id === selected);
 
@@ -314,13 +321,17 @@ export default function PicksForm({
               <div className="grid gap-2 max-h-64 overflow-y-auto pr-1">
                 {options.map((golfer) => {
                   const isSelected = picks[cat.key] === golfer.id;
+                  const takenElsewhere = !isSelected && pickedIds.has(golfer.id);
+
                   return (
                     <label
                       key={golfer.id}
-                      className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-all ${
-                        isSelected
-                          ? "border-[var(--accent)] bg-[rgba(22,163,74,0.1)]"
-                          : "border-[var(--border)] hover:border-[var(--border-strong)] hover:bg-white/[0.03]"
+                      className={`flex items-center gap-3 p-3 rounded-lg border transition-all ${
+                        takenElsewhere
+                          ? "opacity-30 cursor-not-allowed border-[var(--border)]"
+                          : isSelected
+                          ? "border-[var(--accent)] bg-[rgba(22,163,74,0.1)] cursor-pointer"
+                          : "border-[var(--border)] hover:border-[var(--border-strong)] hover:bg-white/[0.03] cursor-pointer"
                       }`}
                     >
                       <input
@@ -328,7 +339,9 @@ export default function PicksForm({
                         name={cat.key}
                         value={golfer.id}
                         checked={isSelected}
+                        disabled={takenElsewhere}
                         onChange={() =>
+                          !takenElsewhere &&
                           setPicks((prev) => ({ ...prev, [cat.key]: golfer.id }))
                         }
                         className="sr-only"
@@ -343,17 +356,30 @@ export default function PicksForm({
                         {isSelected && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="font-medium text-sm">{golfer.name}</p>
+                        <div className="flex items-center gap-1.5">
+                          <p className="font-medium text-sm">{golfer.name}</p>
+                          {takenElsewhere && (
+                            <span className="text-[10px] text-[var(--muted)] italic">already picked</span>
+                          )}
+                        </div>
                         <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
                           <span className="text-xs text-[var(--muted)]">{golfer.country}</span>
+                          {REGION_BADGE[golfer.region] && cat.region !== golfer.region && (
+                            <span className={`badge ${REGION_BADGE[golfer.region]}`}>
+                              {REGION_LABEL[golfer.region]}
+                            </span>
+                          )}
                           {golfer.is_liv && cat.region !== "liv" && (
                             <span className="badge badge-liv">LIV</span>
                           )}
                           {golfer.is_longshot && cat.region !== "longshot" && (
                             <span className="badge badge-longshot">Longshot</span>
                           )}
-                          {golfer.is_senior && cat.region !== "senior" && (
-                            <span className="badge badge-senior">🦕 Fossil</span>
+                          {golfer.is_past_champ && cat.region !== "past_champ" && (
+                            <span className="badge badge-past-champ">Champ</span>
+                          )}
+                          {golfer.is_young_gun && cat.region !== "young_gun" && (
+                            <span className="badge badge-young-gun">U-25</span>
                           )}
                         </div>
                       </div>

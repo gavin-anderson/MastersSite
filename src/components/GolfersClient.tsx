@@ -11,7 +11,8 @@ interface GolferRow {
   region: string;
   is_liv: boolean;
   is_longshot: boolean;
-  is_senior: boolean;
+  is_past_champ: boolean;
+  is_young_gun: boolean;
   odds: number | null;
 }
 
@@ -36,35 +37,42 @@ interface Props {
 const REGION_EMOJI: Record<string, string> = {
   usa: "🇺🇸",
   european: "🇪🇺",
-  asian: "🌏",
+  international: "🌍",
   longshot: "🎯",
   liv: "⚡",
+  past_champ: "🏆",
+  young_gun: "🌟",
 };
 
 const REGION_BADGE: Record<string, string> = {
   usa: "badge-usa",
   european: "badge-european",
-  asian: "badge-asian",
+  international: "badge-international",
   longshot: "badge-longshot",
   liv: "badge-liv",
+  past_champ: "badge-past-champ",
+  young_gun: "badge-young-gun",
 };
 
 const REGION_LABEL: Record<string, string> = {
   usa: "USA",
   european: "EUR",
-  asian: "ASIA",
+  international: "INTL",
   longshot: "LONG",
   liv: "LIV",
+  past_champ: "CHAMP",
+  young_gun: "U-25",
 };
 
 const CATEGORIES = [
-  { key: "all",      label: "All",      icon: null },
-  { key: "usa",      label: "USA",      icon: <US className="w-4 h-auto rounded-[2px]" /> },
-  { key: "european", label: "EUR",      icon: <EU className="w-4 h-auto rounded-[2px]" /> },
-  { key: "asian",    label: "Asia",     icon: <span>🌏</span> },
-  { key: "longshot", label: "Longshot", icon: <span>🎯</span> },
-  { key: "liv",      label: "LIV",      icon: <span>⚡</span> },
-  { key: "senior",   label: "Fossils",  icon: <span>🦕</span> },
+  { key: "all",           label: "All",       icon: null },
+  { key: "usa",           label: "USA",       icon: <US className="w-4 h-auto rounded-[2px]" /> },
+  { key: "european",      label: "EUR",       icon: <EU className="w-4 h-auto rounded-[2px]" /> },
+  { key: "international", label: "Intl",      icon: <span>🌍</span> },
+  { key: "longshot",      label: "Longshot",  icon: <span>🎯</span> },
+  { key: "liv",           label: "LIV",       icon: <span>⚡</span> },
+  { key: "past_champ",    label: "Champs",    icon: <span>🏆</span> },
+  { key: "young_gun",     label: "U-25",      icon: <span>🌟</span> },
 ];
 
 function formatOdds(odds: number | null): string {
@@ -111,8 +119,12 @@ export default function GolfersClient({ golfers, stats, tournamentStarted, curre
       list = list.filter((g) => g.is_longshot);
     } else if (category === "liv") {
       list = list.filter((g) => g.is_liv);
-    } else if (category === "senior") {
-      list = list.filter((g) => g.is_senior);
+    } else if (category === "past_champ") {
+      list = list.filter((g) => g.is_past_champ);
+    } else if (category === "young_gun") {
+      list = list.filter((g) => g.is_young_gun);
+    } else if (category === "international") {
+      list = list.filter((g) => g.region !== "usa" && g.region !== "european");
     } else if (category !== "all") {
       list = list.filter((g) => g.region === category);
     }
@@ -306,8 +318,11 @@ export default function GolfersClient({ golfers, stats, tournamentStarted, curre
                         {golfer.is_longshot && (
                           <span className="badge badge-longshot">Long</span>
                         )}
-                        {golfer.is_senior && (
-                          <span className="badge badge-senior">🦕</span>
+                        {golfer.is_past_champ && (
+                          <span className="badge badge-past-champ">Champ</span>
+                        )}
+                        {golfer.is_young_gun && (
+                          <span className="badge badge-young-gun">U-25</span>
                         )}
                         {golfer.odds && (
                           <span className="text-[10px] text-[var(--gold-light)] font-medium">
@@ -361,8 +376,11 @@ export default function GolfersClient({ golfers, stats, tournamentStarted, curre
                         {golfer.is_longshot && (
                           <span className="badge badge-longshot">Long</span>
                         )}
-                        {golfer.is_senior && (
-                          <span className="badge badge-senior">🦕</span>
+                        {golfer.is_past_champ && (
+                          <span className="badge badge-past-champ">Champ</span>
+                        )}
+                        {golfer.is_young_gun && (
+                          <span className="badge badge-young-gun">U-25</span>
                         )}
                       </div>
                     </div>

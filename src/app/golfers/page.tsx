@@ -22,7 +22,7 @@ export default async function GolfersPage() {
     user
       ? supabase
           .from("picks")
-          .select("usa_pick, european_pick, asian_pick, longshot_pick, liv_pick, senior_pick")
+          .select("usa_pick, european_pick, international_pick, longshot_pick, liv_pick, free_pick, past_champ_pick, young_guns_pick")
           .eq("user_id", user.id)
           .eq("year", TOURNAMENT_YEAR)
           .single()

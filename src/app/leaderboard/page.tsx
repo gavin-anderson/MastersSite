@@ -6,12 +6,14 @@ import LeaderboardClient, { RankedEntry } from "@/components/LeaderboardClient";
 export const revalidate = 120;
 
 const GOLFER_KEYS: Array<[string, string, string]> = [
-  ["usa_pick",      "usa_golfer",      "usa"],
-  ["european_pick", "european_golfer", "european"],
-  ["asian_pick",    "asian_golfer",    "asian"],
-  ["longshot_pick", "longshot_golfer", "longshot"],
-  ["liv_pick",      "liv_golfer",      "liv"],
-  ["senior_pick",   "senior_golfer",   "senior"],
+  ["usa_pick",           "usa_golfer",           "usa"],
+  ["european_pick",      "european_golfer",      "european"],
+  ["international_pick", "international_golfer", "international"],
+  ["longshot_pick",      "longshot_golfer",      "longshot"],
+  ["liv_pick",           "liv_golfer",           "liv"],
+  ["past_champ_pick",    "past_champ_golfer",    "past_champ"],
+  ["young_guns_pick",    "young_guns_golfer",    "young_gun"],
+  ["free_pick",          "free_golfer",          "free"],
 ];
 
 const getData = unstable_cache(
@@ -29,10 +31,12 @@ const getData = unstable_cache(
           *,
           usa_golfer:golfers!picks_usa_pick_fkey(id, name, country, region),
           european_golfer:golfers!picks_european_pick_fkey(id, name, country, region),
-          asian_golfer:golfers!picks_asian_pick_fkey(id, name, country, region),
+          international_golfer:golfers!picks_asian_pick_fkey(id, name, country, region),
           longshot_golfer:golfers!picks_longshot_pick_fkey(id, name, country, region),
           liv_golfer:golfers!picks_liv_pick_fkey(id, name, country, region),
-          senior_golfer:golfers!picks_senior_pick_fkey(id, name, country, region)
+          past_champ_golfer:golfers!picks_past_champ_pick_fkey(id, name, country, region),
+          young_guns_golfer:golfers!picks_young_guns_pick_fkey(id, name, country, region),
+          free_golfer:golfers!picks_free_pick_fkey(id, name, country, region)
         `)
         .eq("year", year),
       supabase

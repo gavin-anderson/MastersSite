@@ -1,6 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
-import { TOURNAMENT_YEAR } from "@/types";
+import { TOURNAMENT_YEAR, PICK_CATEGORIES } from "@/types";
 import PicksForm from "@/components/PicksForm";
 
 export default async function PicksPage() {
@@ -26,8 +26,7 @@ export default async function PicksPage() {
   ]);
 
   const picksLocked = config?.picks_locked || existingPicks?.locked || false;
-  const hasPicks = !!(existingPicks?.usa_pick && existingPicks?.european_pick &&
-    existingPicks?.asian_pick && existingPicks?.longshot_pick && existingPicks?.liv_pick);
+  const hasPicks = !!(existingPicks && PICK_CATEGORIES.every((cat) => existingPicks[cat.key]));
 
   return (
     <div className="max-w-xl mx-auto space-y-6 animate-fade-in">

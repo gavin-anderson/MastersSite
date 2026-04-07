@@ -9,6 +9,46 @@ const EVENT_ID = "401811941"; // 2026 Masters
 /** Pool year. */
 const YEAR = 2026;
 
+/**
+ * Past Masters champions in this year's field.
+ * Keyed by exact ESPN displayName.
+ */
+const PAST_CHAMPS = new Set([
+  "Scottie Scheffler",   // 2022, 2024
+  "Rory McIlroy",        // 2025
+  "Jon Rahm",            // 2023
+  "Hideki Matsuyama",    // 2021
+  "Dustin Johnson",      // 2020
+  "Tiger Woods",         // 2019
+  "Patrick Reed",        // 2018
+  "Sergio García",       // 2017
+  "Danny Willett",       // 2016
+  "Jordan Spieth",       // 2015
+  "Bubba Watson",        // 2012, 2014
+  "Adam Scott",          // 2013
+  "Charl Schwartzel",    // 2011
+  "Ángel Cabrera",       // 2009
+  "Trevor Immelman",     // 2008
+  "Zach Johnson",        // 2007
+  "Phil Mickelson",      // 2004, 2006, 2010
+  "Mike Weir",           // 2003
+  "Vijay Singh",         // 2000
+  "José María Olazábal", // 1994, 1999
+  "Mark O'Meara",        // 1998
+  "Ben Crenshaw",        // 1984, 1995
+  "Fred Couples",        // 1992
+  "Ian Woosnam",         // 1991
+  "Nick Faldo",          // 1989, 1990, 1996
+  "Sandy Lyle",          // 1988
+  "Larry Mize",          // 1987
+  "Bernhard Langer",     // 1985, 1993
+  "Craig Stadler",       // 1982
+  "Tom Watson",          // 1977, 1981
+  "Gary Player",         // 1961, 1974, 1978
+  "Arnold Palmer",       // 1958, 1960, 1962, 1964
+  "Jack Nicklaus",       // 1963, 1965, 1966, 1972, 1975, 1986
+  "Seve Ballesteros",    // 1980, 1983
+]);
 
 /**
  * LIV Golf players in this year's Masters field.
@@ -31,7 +71,7 @@ const LIV_PLAYERS = new Set([
 
 /**
  * Birth years for every player in the field.
- * Used to compute the "Fossil" (40+) tag.
+ * Used to compute the "Young Guns" (under 25) tag.
  * Keyed by exact ESPN displayName.
  */
 const BIRTH_YEARS = {
@@ -133,19 +173,8 @@ const BIRTH_YEARS = {
  * These are inserted directly rather than coming from the ESPN sync.
  * country must match the ESPN flag.description format.
  */
-const MANUAL_PLAYERS = [
-  { name: "Fred Couples",     country: "United States" },
-  { name: "Matt Fitzpatrick", country: "England"       },
-  { name: "Corey Conners",    country: "Canada"        },
-  { name: "Cameron Smith",    country: "Australia"     },
-  { name: "Haotong Li",       country: "China"         },
-  { name: "Brian Campbell",   country: "United States" },
-  { name: "Maverick McNealy", country: "United States" },
-  { name: "Jon Rahm",         country: "Spain"         },
-  { name: "Jake Knapp",       country: "United States" },
-  { name: "Sam Burns",        country: "United States" },
-  { name: "Scottie Scheffler",country: "United States" },
-];
+// Add players here only if ESPN omits them from the leaderboard API entirely.
+const MANUAL_PLAYERS = [];
 
 
 /**
@@ -246,4 +275,4 @@ const ODDS = {
   "Jackson Herrington":         500000,
 };
 
-module.exports = { EVENT_ID, YEAR, LIV_PLAYERS, BIRTH_YEARS, MANUAL_PLAYERS, ODDS };
+module.exports = { EVENT_ID, YEAR, PAST_CHAMPS, LIV_PLAYERS, BIRTH_YEARS, MANUAL_PLAYERS, ODDS };

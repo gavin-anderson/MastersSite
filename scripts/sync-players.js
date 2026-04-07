@@ -5,13 +5,14 @@
 //
 // 1. Fetches the Masters field from the ESPN leaderboard API
 // 2. Merges in any manually-listed players ESPN omits
-// 3. Computes tags: region, is_liv, is_fossil (40+), is_longshot (odds > +10000)
+// 3. Computes tags: region (usa/european/international), is_liv, is_longshot (odds > +10000)
 // 4. Upserts everything into the Supabase `golfers` table
 // ─────────────────────────────────────────────────────────────────────────────
 
 const { createClient } = require("@supabase/supabase-js");
 const {
   EVENT_ID,
+  PAST_CHAMPS,
   LIV_PLAYERS,
   BIRTH_YEARS,
   MANUAL_PLAYERS,
@@ -19,14 +20,6 @@ const {
 } = require("./player-config");
 
 const ESPN_URL = `https://site.web.api.espn.com/apis/site/v2/sports/golf/leaderboard?league=pga&event=${EVENT_ID}`;
-
-// Region buckets
-const REGION = {
-  USA: "usa",
-  EU: "european",
-  ASIA: "asian",
-  OTHER: "other",
-};
 
 // Region should come from birthplace, stored in `country`
 const COUNTRY_REGION = {
@@ -65,14 +58,6 @@ const COUNTRY_REGION = {
   "luxembourg": "european",
   "malta": "european",
   "cyprus": "european",
-  "japan": "asian",
-  "south korea": "asian",
-  "china": "asian",
-  "thailand": "asian",
-  "chinese taipei": "asian",
-  "taiwan": "asian",
-  "india": "asian",
-  "philippines": "asian",
 };
 
 function normalizeCountry(value) {
@@ -80,13 +65,13 @@ function normalizeCountry(value) {
 }
 
 function getRegion(country) {
-  return COUNTRY_REGION[normalizeCountry(country)] ?? "other";
+  return COUNTRY_REGION[normalizeCountry(country)] ?? "international";
 }
 
-function isFossil(name, tournamentYear) {
+function isYoungGun(name, tournamentYear) {
   const born = BIRTH_YEARS[name];
   if (!born) return false;
-  return tournamentYear - born > 40; // strictly over 40 — born 1985 or earlier
+  return tournamentYear - born < 25; // under 25
 }
 
 // Normalize a name for fuzzy matching (remove accents + special chars, lowercase)
@@ -144,6 +129,7 @@ async function main() {
   }
 
   // Merge manual players ESPN omits
+  let manualAdded = 0;
   for (const manual of MANUAL_PLAYERS) {
     if (!playerMap.has(manual.name)) {
       playerMap.set(manual.name, {
@@ -152,7 +138,15 @@ async function main() {
         image_url: null,
       });
       console.log(`  + Manual add: ${manual.name}`);
+      manualAdded++;
     }
+  }
+  if (MANUAL_PLAYERS.length === 0) {
+    console.log("  Manual players: none configured");
+  } else if (manualAdded === 0) {
+    console.log("  Manual players: all found in ESPN — none needed");
+  } else {
+    console.log(`  Manual players: ${manualAdded}/${MANUAL_PLAYERS.length} added`);
   }
 
   // Build upsert payload
@@ -160,7 +154,8 @@ async function main() {
 
   for (const { name, country, image_url } of playerMap.values()) {
     const isLiv = LIV_PLAYERS.has(name);
-    const fossil = isFossil(name, tournamentYear);
+    const youngGun = isYoungGun(name, tournamentYear);
+    const pastChamp = PAST_CHAMPS.has(name);
     const odds = ODDS[name] ?? null;
     const longshot = odds != null && odds > 10000;
     const region = getRegion(country);
@@ -171,8 +166,9 @@ async function main() {
       region,
       tour: isLiv ? "liv" : "pga",
       is_liv: isLiv,
-      is_senior: fossil,
       is_longshot: longshot,
+      is_past_champ: pastChamp,
+      is_young_gun: youngGun,
       odds,
       image_url,
       updated_at: new Date().toISOString(),
@@ -190,14 +186,18 @@ async function main() {
   }
 
   // Summary
-  const fossils = upserts.filter((p) => p.is_senior).map((p) => p.name);
-  const liv = upserts.filter((p) => p.is_liv).map((p) => p.name);
-  const longshots = upserts.filter((p) => p.is_longshot).map((p) => p.name);
+  const liv        = upserts.filter((p) => p.is_liv).map((p) => p.name);
+  const longshots  = upserts.filter((p) => p.is_longshot).map((p) => p.name);
+  const pastChamps = upserts.filter((p) => p.is_past_champ).map((p) => p.name);
+  const youngGuns  = upserts.filter((p) => p.is_young_gun).map((p) => p.name);
+  const intl       = upserts.filter((p) => p.region === "international").map((p) => p.name);
 
   console.log(`\nDone — ${upserts.length} players synced`);
-  console.log(`  Fossils   (${fossils.length}): ${fossils.join(", ")}`);
-  console.log(`  LIV       (${liv.length}): ${liv.join(", ")}`);
-  console.log(`  Longshots (${longshots.length}): ${longshots.join(", ")}`);
+  console.log(`  LIV        (${liv.length}): ${liv.join(", ")}`);
+  console.log(`  Longshots  (${longshots.length}): ${longshots.join(", ")}`);
+  console.log(`  Past Champs(${pastChamps.length}): ${pastChamps.join(", ")}`);
+  console.log(`  Young Guns (${youngGuns.length}): ${youngGuns.join(", ")}`);
+  console.log(`  Intl       (${intl.length}): ${intl.join(", ")}`);
 }
 
 main().catch((err) => {

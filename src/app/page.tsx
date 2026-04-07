@@ -6,7 +6,7 @@ const CATEGORIES = [
     emoji: "🇺🇸",
     label: "American",
     color: "badge-usa",
-    rules: "Pick any golfer born in the United States.",
+    rules: "Pick any golfer from the United States.",
   },
   {
     emoji: "🇪🇺",
@@ -15,10 +15,10 @@ const CATEGORIES = [
     rules: "Pick any golfer from a European nation — UK, Ireland, Spain, Scandinavia, etc.",
   },
   {
-    emoji: "🌏",
-    label: "Asian",
-    color: "badge-asian",
-    rules: "Pick any golfer from an Asian country — Japan, South Korea, China, Thailand, etc.",
+    emoji: "🌍",
+    label: "International",
+    color: "badge-international",
+    rules: "Pick any golfer from outside the USA and Europe.",
   },
   {
     emoji: "🎯",
@@ -33,10 +33,22 @@ const CATEGORIES = [
     rules: "Pick any active LIV Golf tour member competing at Augusta.",
   },
   {
-    emoji: "🦕",
-    label: "Fossils",
-    color: "badge-senior",
-    rules: "Pick a past champion or Augusta veteran aged 50 or over. Respect your elders — or bet on them.",
+    emoji: "🏆",
+    label: "Past Champ",
+    color: "badge-past-champ",
+    rules: "Pick a former Masters champion.",
+  },
+  {
+    emoji: "🌟",
+    label: "Young Guns",
+    color: "badge-young-gun",
+    rules: "Pick a golfer under 25 years old at the time of the tournament.",
+  },
+  {
+    emoji: "🎰",
+    label: "Free Pick",
+    color: "badge-longshot",
+    rules: "Pick any golfer in the field — your wildcard slot.",
   },
 ];
 
@@ -54,7 +66,7 @@ const STEPS = [
   {
     num: "3",
     title: "Make Your Picks",
-    body: "Select one golfer from each of the five categories before the tournament begins.",
+    body: "Select one golfer from each of the eight categories before the tournament begins.",
   },
   {
     num: "4",
@@ -74,7 +86,7 @@ export default function HowItWorksPage() {
           {TOURNAMENT_YEAR} Masters Pool
         </h1>
         <p className="text-sm text-[var(--muted-light)] max-w-xs mx-auto leading-relaxed">
-          Pick five golfers across five categories. Lowest combined score wins.
+          Pick eight golfers across eight categories. Lowest combined score wins.
         </p>
         <div className="flex justify-center gap-3 pt-1">
           <Link href="/picks" className="btn-primary">
@@ -106,9 +118,9 @@ export default function HowItWorksPage() {
 
       {/* The Five Categories */}
       <section className="space-y-3">
-        <h2 className="text-lg font-bold tracking-tight">The Five Categories</h2>
+        <h2 className="text-lg font-bold tracking-tight">The Eight Categories</h2>
         <p className="text-sm text-[var(--muted)]">
-          You must pick exactly one golfer from each category. All five picks are required to enter.
+          You must pick exactly one golfer from each category. All eight picks are required to enter.
         </p>
         <div className="space-y-2">
           {CATEGORIES.map((cat) => (
@@ -135,7 +147,7 @@ export default function HowItWorksPage() {
             <div>
               <p className="font-semibold text-sm">Combined Score to Par</p>
               <p className="text-sm text-[var(--muted)] leading-relaxed mt-0.5">
-                Your total is the combined score relative to par for all five of your golfers. Under par is shown in{" "}
+                Your total is the combined score relative to par for all eight of your golfers. Under par is shown in{" "}
                 <span className="score-under">green</span>, over par in{" "}
                 <span className="score-over">red</span>.{" "}
                 <strong className="text-[var(--foreground)]">Lowest score wins.</strong>
@@ -199,7 +211,7 @@ export default function HowItWorksPage() {
         <p className="text-2xl">🏌️</p>
         <p className="font-semibold">Ready to play?</p>
         <p className="text-sm text-[var(--muted)]">
-          Submit your five picks before the first tee time and may the best team win.
+          Submit your eight picks before the first tee time and may the best team win.
         </p>
         <Link href="/picks" className="btn-gold inline-flex">
           Submit Your Picks

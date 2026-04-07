@@ -6,12 +6,14 @@ import EU from "country-flag-icons/react/3x2/EU";
 import type { ReactNode } from "react";
 
 const CATEGORY_MAP: Record<string, { icon: ReactNode; label: string }> = {
-  usa:      { icon: <US className="w-4 h-auto rounded-[2px]" />, label: "American" },
-  european: { icon: <EU className="w-4 h-auto rounded-[2px]" />, label: "European" },
-  asian:    { icon: "🌏",  label: "Asian" },
-  longshot: { icon: "🎯",  label: "Longshot" },
-  liv:      { icon: "⚡",  label: "LIV" },
-  senior:   { icon: "🦕",  label: "Fossil" },
+  usa:           { icon: <US className="w-4 h-auto rounded-[2px]" />, label: "American" },
+  european:      { icon: <EU className="w-4 h-auto rounded-[2px]" />, label: "European" },
+  international: { icon: "🌍", label: "International" },
+  longshot:      { icon: "🎯", label: "Longshot" },
+  liv:           { icon: "⚡", label: "LIV" },
+  past_champ:    { icon: "🏆", label: "Past Champ" },
+  young_gun:     { icon: "🌟", label: "Young Guns" },
+  free:          { icon: "🎰", label: "Free Pick" },
 };
 
 function getScoreDisplay(score: number | null, status?: string) {

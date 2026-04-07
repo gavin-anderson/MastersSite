@@ -1,4 +1,4 @@
-export type GolferRegion = "usa" | "european" | "asian" | "longshot" | "liv" | "senior" | "other";
+export type GolferRegion = "usa" | "european" | "international" | "longshot" | "liv" | "young_gun" | "past_champ" | "free";
 
 export interface Golfer {
   id: string;
@@ -7,7 +7,8 @@ export interface Golfer {
   region: GolferRegion; // geographic only: usa | european | asian | other
   is_liv: boolean;
   is_longshot: boolean;
-  is_senior: boolean;
+  is_past_champ: boolean;
+  is_young_gun: boolean;
   odds: number | null; // e.g. 10000 = 100-1 odds
   tour: "pga" | "liv";
   image_url: string | null;
@@ -23,6 +24,7 @@ export interface GolferStats {
   round_score: number | null; // current round score relative to par
   position: number | null;
   thru: number | null; // holes completed in current round
+  tee_time: string | null; // ISO tee time for current round
   status: "active" | "cut" | "wd" | "mc" | "notstarted";
   updated_at: string;
   golfer?: Golfer;
@@ -41,18 +43,15 @@ export interface Picks {
   year: number;
   usa_pick: string | null;
   european_pick: string | null;
-  asian_pick: string | null;
+  international_pick: string | null;
   longshot_pick: string | null;
   liv_pick: string | null;
-  senior_pick: string | null;
+  free_pick: string | null;
+  past_champ_pick: string | null;
+  young_guns_pick: string | null;
   submitted_at: string;
   locked: boolean;
   profile?: Profile;
-  usa_golfer?: Golfer;
-  european_golfer?: Golfer;
-  asian_golfer?: Golfer;
-  longshot_golfer?: Golfer;
-  liv_golfer?: Golfer;
 }
 
 export interface LeaderboardEntry {
@@ -88,11 +87,11 @@ export const PICK_CATEGORIES: {
     emoji: "🇪🇺",
   },
   {
-    key: "asian_pick",
-    label: "Asian",
-    region: "asian",
-    description: "A golfer from Asia",
-    emoji: "🌏",
+    key: "international_pick",
+    label: "International",
+    region: "international",
+    description: "A golfer from outside the USA and Europe",
+    emoji: "🌍",
   },
   {
     key: "longshot_pick",
@@ -109,11 +108,25 @@ export const PICK_CATEGORIES: {
     emoji: "⚡",
   },
   {
-    key: "senior_pick",
-    label: "Fossils",
-    region: "senior",
-    description: "A past champion or Augusta veteran aged 50 or over",
-    emoji: "🦕",
+    key: "past_champ_pick",
+    label: "Past Champ",
+    region: "past_champ",
+    description: "A former Masters champion",
+    emoji: "🏆",
+  },
+  {
+    key: "young_guns_pick",
+    label: "Young Guns",
+    region: "young_gun",
+    description: "A golfer under 25 years old",
+    emoji: "⚡",
+  },
+  {
+    key: "free_pick",
+    label: "Free Pick",
+    region: "free",
+    description: "Any golfer in the field",
+    emoji: "🎰",
   },
 ];
 

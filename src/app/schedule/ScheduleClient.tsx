@@ -17,12 +17,14 @@ export interface GolferRow {
 export type PickedNames = Record<string, { label: string; emoji: string }>;
 
 const PICK_MAP: [string, string, string][] = [
-  ["usa_golfer",      "American", "🇺🇸"],
-  ["european_golfer", "European", "🇪🇺"],
-  ["asian_golfer",    "Asian",    "🌏"],
-  ["longshot_golfer", "Longshot", "🎯"],
-  ["liv_golfer",      "LIV",      "⚡"],
-  ["senior_golfer",   "Fossils",  "🦕"],
+  ["usa_golfer",           "American",      "🇺🇸"],
+  ["european_golfer",      "European",      "🇪🇺"],
+  ["international_golfer", "International", "🌍"],
+  ["longshot_golfer",      "Longshot",      "🎯"],
+  ["liv_golfer",           "LIV",           "⚡"],
+  ["past_champ_golfer",    "Past Champ",    "🏆"],
+  ["young_guns_golfer",    "Young Guns",    "🌟"],
+  ["free_golfer",          "Free Pick",     "🎰"],
 ];
 
 const COUNTRY_FLAG: Record<string, string> = {

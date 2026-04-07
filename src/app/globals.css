@@ -288,6 +288,24 @@ body {
     border: 1px solid rgba(148, 163, 184, 0.25);
   }
 
+  .badge-international {
+    background: rgba(20, 184, 166, 0.15);
+    color: #5eead4;
+    border: 1px solid rgba(20, 184, 166, 0.25);
+  }
+
+  .badge-past-champ {
+    background: rgba(234, 179, 8, 0.2);
+    color: #fcd34d;
+    border: 1px solid rgba(234, 179, 8, 0.35);
+  }
+
+  .badge-young-gun {
+    background: rgba(52, 211, 153, 0.15);
+    color: #6ee7b7;
+    border: 1px solid rgba(52, 211, 153, 0.25);
+  }
+
   /* ===== Score display ===== */
   .score-under {
     color: #4ade80;
