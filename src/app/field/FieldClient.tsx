@@ -324,27 +324,25 @@ export default function FieldClient({
       </div>
 
       {/* Category filter pills + My Picks */}
-      <div className="flex items-center gap-2 flex-wrap">
-        <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-none flex-1">
-          {CATEGORIES.map((cat) => (
-            <button
-              key={cat.key}
-              onClick={() => setCategory((prev) => prev === cat.key ? "all" : cat.key)}
-              className={`shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
-                category === cat.key
-                  ? "bg-[var(--accent)] text-white"
-                  : "bg-white/5 text-[var(--muted)] hover:bg-white/10 hover:text-[var(--foreground)]"
-              }`}
-            >
-              {cat.icon}
-              {cat.label}
-            </button>
-          ))}
-        </div>
+      <div className="flex flex-wrap gap-1.5">
+        {CATEGORIES.map((cat) => (
+          <button
+            key={cat.key}
+            onClick={() => setCategory((prev) => prev === cat.key ? "all" : cat.key)}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
+              category === cat.key
+                ? "bg-[var(--accent)] text-white"
+                : "bg-white/5 text-[var(--muted)] hover:bg-white/10 hover:text-[var(--foreground)]"
+            }`}
+          >
+            {cat.icon}
+            {cat.label}
+          </button>
+        ))}
         {haspicks && (
           <button
             onClick={() => setMyPicksOnly((v) => !v)}
-            className={`shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-all ${
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-all ${
               myPicksOnly
                 ? "bg-[var(--gold)] text-black"
                 : "bg-white/[0.06] text-[var(--muted)] hover:text-[var(--foreground)] hover:bg-white/[0.1]"
@@ -432,7 +430,7 @@ export default function FieldClient({
                 onClick={() => setOpenGolfer(isOpen ? null : golfer.golfer_id)}
                 className={`w-full grid grid-cols-[1.5rem_1fr_3rem_3rem_3rem] sm:grid-cols-[2rem_1fr_4.5rem_3.5rem_3.5rem_4rem] gap-x-2 items-center px-3 sm:px-4 py-2.5 text-left transition-colors hover:bg-white/[0.03] ${
                   isMC || isWD ? "opacity-40" : ""
-                } ${isActive ? "bg-[var(--accent-light)]/5" : ""} ${isOpen ? "bg-white/[0.04]" : ""}`}
+                } ${pick ? "bg-[#fbbf24]/[0.08]" : isActive ? "bg-[var(--accent-light)]/5" : ""} ${isOpen ? "bg-white/[0.04]" : ""}`}
               >
                 {/* Rank */}
                 <span className="text-xs tabular-nums text-[var(--muted)] text-center font-medium">
@@ -468,7 +466,6 @@ export default function FieldClient({
                       <span className="badge badge-young-gun shrink-0">U-30</span>
                     )}
                   </span>
-                  {pick && <span className="text-sm leading-none shrink-0">⭐</span>}
                   {isActive && (
                     <span className="w-1.5 h-1.5 rounded-full bg-[var(--accent-light)] animate-pulse shrink-0" />
                   )}
