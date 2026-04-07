@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 
-// This endpoint is called by Vercel Cron every 10 minutes during the tournament.
+// This endpoint is called by Vercel Cron every minute during the tournament.
 // It fetches the Masters leaderboard from ESPN's unofficial API and syncs scores.
 
 const MASTERS_EVENT_ID = process.env.MASTERS_EVENT_ID;
@@ -12,6 +12,7 @@ const ESPN_URL = MASTERS_EVENT_ID
 // Country → region mapping (expand as needed)
 const COUNTRY_REGION: Record<string, string> = {
   USA: "usa",
+  "United States": "usa",
   England: "european",
   Scotland: "european",
   Ireland: "european",
@@ -113,45 +114,50 @@ export async function GET(request: Request) {
 
     for (const comp of competitors) {
       const name: string = comp.athlete?.displayName ?? "";
-      const country: string = comp.athlete?.flag?.description ?? "USA";
+      const countryFromESPN: string | undefined = comp.athlete?.flag?.alt || undefined;
+      const imageUrl: string | undefined = comp.athlete?.headshot?.href || undefined;
       const isLiv = LIV_GOLFERS.has(name);
-      const region = getGeographicRegion(country);
 
       const parScore = comp.statistics?.find(
         (s: { name: string }) => s.name === "scoreToPar"
       )?.displayValue;
-      const relativePar =
-        parScore === "E" ? 0 : parScore ? parseInt(parScore) : null;
+      const parsedPar = parScore === "E" ? 0 : parseInt(parScore ?? "");
+      const relativePar = Number.isFinite(parsedPar) ? parsedPar : null;
 
-      const status = comp.status?.type?.name?.toLowerCase();
+      const statusName: string = comp.status?.type?.name?.toLowerCase() ?? "";
+      const state: string = comp.status?.type?.state ?? "pre";
       const mappedStatus =
-        status === "cut" ? "mc" :
-          status === "wd" ? "wd" :
-            status === "active" ? "active" : "notstarted";
+        statusName.includes("cut") ? "mc" :
+        statusName.includes("wd") || statusName.includes("withdraw") ? "wd" :
+        state === "post" ? "complete" :
+        state === "in" ? "active" : "notstarted";
 
       const thru = comp.status?.period ?? null;
 
       // Current round score from linescores array
-      const currentRound: number = data?.events?.[0]?.competitions?.[0]?.status?.period ?? 1;
+      const currentRound: number = data?.events?.[0]?.competitions?.[0]?.status?.period || 1;
       const linescores: { value: number }[] = comp.linescores ?? [];
       const roundScoreRaw = linescores[currentRound - 1]?.value;
-      const roundScore = roundScoreRaw != null ? (roundScoreRaw === 0 ? 0 : roundScoreRaw) : null;
+      const roundScore = roundScoreRaw != null ? roundScoreRaw : null;
 
-      // Upsert golfer
+      // Upsert golfer — only write country/region if ESPN returned real data
+      const golferPayload: Record<string, unknown> = {
+        name,
+        tour: isLiv ? "liv" : "pga",
+        is_liv: isLiv,
+        updated_at: new Date().toISOString(),
+      };
+      if (countryFromESPN) {
+        golferPayload.country = countryFromESPN;
+        golferPayload.region = getGeographicRegion(countryFromESPN);
+      }
+      if (imageUrl) {
+        golferPayload.image_url = imageUrl;
+      }
+
       const { data: golfer, error: golferError } = await supabase
         .from("golfers")
-        .upsert(
-          {
-            name,
-            country,
-            region,
-            tour: isLiv ? "liv" : "pga",
-            is_liv: isLiv,
-            world_ranking: comp.athlete?.ranking ?? null,
-            updated_at: new Date().toISOString(),
-          },
-          { onConflict: "name" }
-        )
+        .upsert(golferPayload, { onConflict: "name" })
         .select("id")
         .single();
 
@@ -163,7 +169,7 @@ export async function GET(request: Request) {
         score: relativePar,
         position: comp.sortOrder ?? null,
         status: mappedStatus,
-        thru: comp.status?.type?.name === "active" ? thru : null,
+        thru: state === "in" ? thru : null,
         round: currentRound,
         round_score: roundScore,
         updated_at: new Date().toISOString(),

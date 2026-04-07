@@ -9,58 +9,6 @@ const EVENT_ID = "401811941"; // 2026 Masters
 /** Pool year. */
 const YEAR = 2026;
 
-/**
- * Explicit longshot players for this year's field.
- * These are players who are significant underdogs / lower-ranked field members.
- * Amateurs are always longshots and don't need to be listed here.
- */
-const LONGSHOT_PLAYERS = new Set([
-  // Mid-tier / borderline pros
-  "Gary Woodland",
-  "Nick Taylor",
-  "Alex Noren",
-  "Ryan Fox",
-  "Danny Willett",
-  "Harris English",
-  "Russell Henley",
-  "Carlos Ortiz",
-  "Davis Riley",
-  "J.J. Spaun",
-  "Andrew Novak",
-  "Max Greyserman",
-  "Aaron Rai",
-  "Ben Griffin",
-  "Tom McKibbin",
-  "Kristoffer Reitan",
-  "Sam Stevens",
-  "Michael Kim",
-  "Daniel Berger",
-  // Deeper field
-  "Haotong Li",
-  "Brian Campbell",
-  "Maverick McNealy",
-  "Jake Knapp",
-  "Sami Välimäki",
-  "Marco Penge",
-  "Harry Hall",
-  "Casey Jarvis",
-  "Chris Gotterup",
-  "Naoyuki Kataoka",
-  "Rasmus Neergaard-Petersen",
-  "Matt McCarty",
-  "Michael Brennan",
-  "Jacob Bridgeman",
-  "Ryan Gerard",
-  "Aldrich Potgieter",
-  "Johnny Keefer",
-  // Amateurs
-  "Brandon Holtz",
-  "Mason Howell",
-  "Ethan Fang",
-  "Fifa Laopakdee",
-  "Mateo Pulcini",
-  "Jackson Herrington",
-]);
 
 /**
  * LIV Golf players in this year's Masters field.
@@ -199,105 +147,6 @@ const MANUAL_PLAYERS = [
   { name: "Scottie Scheffler",country: "United States" },
 ];
 
-/**
- * Authoritative OWGR rankings for the 2026 Masters field.
- * Used as a fallback when Sportradar doesn't cover a player (outside top 200, LIV, etc.).
- * null = no world ranking (amateurs, honorary invitees).
- * Keyed by ESPN displayName.
- */
-const MANUAL_RANKINGS = {
-  "Ludvig Åberg":               17,
-  "Daniel Berger":              38,
-  "Akshay Bhatia":              21,
-  "Keegan Bradley":             26,
-  "Michael Brennan":            47,
-  "Jacob Bridgeman":            18,
-  "Sam Burns":                  33,
-  "Ángel Cabrera":              null,
-  "Brian Campbell":             112,
-  "Patrick Cantlay":            35,
-  "Wyndham Clark":              78,
-  "Corey Conners":              44,
-  "Fred Couples":               null,
-  "Jason Day":                  41,
-  "Bryson DeChambeau":          24,
-  "Nico Echavarria":            40,
-  "Harris English":             20,
-  "Ethan Fang":                 null,
-  "Matt Fitzpatrick":           6,
-  "Tommy Fleetwood":            4,
-  "Ryan Fox":                   51,
-  "Sergio García":              345,
-  "Ryan Gerard":                29,
-  "Chris Gotterup":             11,
-  "Max Greyserman":             59,
-  "Ben Griffin":                16,
-  "Harry Hall":                 62,
-  "Brian Harman":               50,
-  "Tyrrell Hatton":             31,
-  "Russell Henley":             12,
-  "Jackson Herrington":         null,
-  "Nicolai Højgaard":           36,
-  "Rasmus Højgaard":            57,
-  "Brandon Holtz":              null,
-  "Max Homa":                   163,
-  "Viktor Hovland":             22,
-  "Mason Howell":               null,
-  "Sungjae Im":                 71,
-  "Casey Jarvis":               70,
-  "Dustin Johnson":             593,
-  "Zach Johnson":               321,
-  "Naoyuki Kataoka":            372,
-  "Johnny Keefer":              64,
-  "Michael Kim":                43,
-  "Si Woo Kim":                 28,
-  "Kurt Kitayama":              34,
-  "Jake Knapp":                 42,
-  "Brooks Koepka":              169,
-  "Fifa Laopakdee":             null,
-  "Min Woo Lee":                25,
-  "Haotong Li":                 84,
-  "Shane Lowry":                32,
-  "Robert MacIntyre":           8,
-  "Hideki Matsuyama":           14,
-  "Matt McCarty":               49,
-  "Rory McIlroy":               2,
-  "Tom McKibbin":               105,
-  "Maverick McNealy":           27,
-  "Collin Morikawa":            7,
-  "Rasmus Neergaard-Petersen":  69,
-  "Alex Noren":                 19,
-  "Andrew Novak":               48,
-  "José María Olazábal":        null,
-  "Carlos Ortiz":               161,
-  "Marco Penge":                37,
-  "Aldrich Potgieter":          77,
-  "Mateo Pulcini":              null,
-  "Jon Rahm":                   30,
-  "Aaron Rai":                  39,
-  "Patrick Reed":               23,
-  "Kristoffer Reitan":          46,
-  "Davis Riley":                120,
-  "Justin Rose":                9,
-  "Xander Schauffele":          10,
-  "Scottie Scheffler":          1,
-  "Charl Schwartzel":           566,
-  "Adam Scott":                 53,
-  "Vijay Singh":                null,
-  "Cameron Smith":              222,
-  "J.J. Spaun":                 5,
-  "Jordan Spieth":              61,
-  "Sam Stevens":                45,
-  "Sepp Straka":                13,
-  "Nick Taylor":                67,
-  "Justin Thomas":              15,
-  "Sami Välimäki":              56,
-  "Bubba Watson":               702,
-  "Mike Weir":                  null,
-  "Danny Willett":              400,
-  "Gary Woodland":              52,
-  "Cameron Young":              3,
-};
 
 /**
  * Outright winner odds (American format) for the 2026 Masters field.
@@ -397,4 +246,4 @@ const ODDS = {
   "Jackson Herrington":         500000,
 };
 
-module.exports = { EVENT_ID, YEAR, LONGSHOT_PLAYERS, LIV_PLAYERS, BIRTH_YEARS, MANUAL_PLAYERS, MANUAL_RANKINGS, ODDS };
+module.exports = { EVENT_ID, YEAR, LIV_PLAYERS, BIRTH_YEARS, MANUAL_PLAYERS, ODDS };

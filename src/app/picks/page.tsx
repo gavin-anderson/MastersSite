@@ -19,7 +19,7 @@ export default async function PicksPage() {
     { data: config },
     { data: stats },
   ] = await Promise.all([
-    supabase.from("golfers").select("*").order("world_ranking", { ascending: true, nullsFirst: false }),
+    supabase.from("golfers").select("*").order("name", { ascending: true }),
     supabase.from("picks").select("*").eq("user_id", user.id).eq("year", TOURNAMENT_YEAR).single(),
     supabase.from("tournament_config").select("picks_locked").eq("year", TOURNAMENT_YEAR).single(),
     supabase.from("golfer_stats").select("golfer_id, score, round_score, position, status, thru").eq("year", TOURNAMENT_YEAR),

@@ -21,7 +21,7 @@ async function getGolfers(): Promise<{ golfers: GolferRow[]; currentRound: numbe
     const data = await res.json();
     const competition = data?.events?.[0]?.competitions?.[0];
     const competitors = competition?.competitors ?? [];
-    const currentRound: number = competition?.status?.period ?? 1;
+    const currentRound: number = competition?.status?.period || 1;
 
     if (competitors.length === 0) return null;
 
@@ -31,8 +31,8 @@ async function getGolfers(): Promise<{ golfers: GolferRow[]; currentRound: numbe
       const statusType = status?.type as Record<string, unknown> | undefined;
 
       const name: string = (athlete?.displayName as string) ?? "";
-      const country: string = ((athlete?.flag as Record<string, unknown>)?.description as string) ?? "";
-      const teeTime: string | null = (comp.teeTime as string) ?? null;
+      const country: string = ((athlete?.flag as Record<string, unknown>)?.alt as string) ?? "";
+      const teeTime: string | null = (status?.teeTime as string) ?? null;
 
       const statusName: string = (statusType?.name as string)?.toLowerCase() ?? "";
       const state: string = (statusType?.state as string) ?? "pre";

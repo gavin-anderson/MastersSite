@@ -4,6 +4,14 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Golfer, Picks, PICK_CATEGORIES } from "@/types";
+import US from "country-flag-icons/react/3x2/US";
+import EU from "country-flag-icons/react/3x2/EU";
+import type { ReactNode } from "react";
+
+const CATEGORY_ICON: Record<string, ReactNode> = {
+  usa:      <US className="w-5 h-auto rounded-[2px]" />,
+  european: <EU className="w-5 h-auto rounded-[2px]" />,
+};
 
 interface StatRow {
   golfer_id: string;
@@ -133,7 +141,7 @@ export default function PicksForm({
   );
 
   const [mode, setMode] = useState<"roster" | "editing">(
-    hasPicks ? "roster" : "editing"
+    hasPicks || locked ? "roster" : "editing"
   );
 
   const [picks, setPicks] = useState<Record<string, string>>({
@@ -167,7 +175,7 @@ export default function PicksForm({
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!allSelected) return;
+    if (locked || !allSelected) return;
 
     setSaving(true);
     setError(null);
@@ -196,6 +204,19 @@ export default function PicksForm({
     }
   }
 
+  // ── Locked with no picks ─────────────────────────────────────
+  if (locked && !hasPicks) {
+    return (
+      <div className="glass-card p-10 text-center space-y-3">
+        <div className="text-3xl">🔒</div>
+        <p className="font-semibold">Picks are closed</p>
+        <p className="text-sm text-[var(--muted)]">
+          The tournament has started and picks are now locked.
+        </p>
+      </div>
+    );
+  }
+
   // ── Roster view ──────────────────────────────────────────────
   if (mode === "roster") {
     return (
@@ -209,7 +230,9 @@ export default function PicksForm({
                 : "Picks lock when the tournament begins"}
             </p>
           </div>
-          {!locked ? (
+          {locked ? (
+            <span className="text-xs text-[var(--gold-light)] font-medium">🔒 Locked</span>
+          ) : (
             <button
               onClick={() => setMode("editing")}
               className="btn-outline flex items-center gap-2 text-sm py-2 px-4"
@@ -219,8 +242,6 @@ export default function PicksForm({
               </svg>
               Edit
             </button>
-          ) : (
-            <span className="text-xs text-[var(--gold-light)] font-medium">🔒 Locked</span>
           )}
         </div>
 
@@ -232,7 +253,9 @@ export default function PicksForm({
 
             return (
               <div key={cat.key} className="glass-card-sm px-4 py-3 flex items-center gap-3">
-                <span className="text-xl shrink-0">{cat.emoji}</span>
+                <span className="shrink-0 flex items-center justify-center w-6">
+                  {CATEGORY_ICON[cat.region] ?? <span className="text-xl">{cat.emoji}</span>}
+                </span>
                 <div className="min-w-0 flex-1">
                   <p className="text-[10px] text-[var(--muted)] font-medium uppercase tracking-wider">
                     {cat.label}
@@ -263,8 +286,8 @@ export default function PicksForm({
         return (
           <div key={cat.key} className="glass-card p-5 space-y-3">
             <div className="flex items-center gap-2">
-              <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-[var(--border)] bg-white/5 text-base">
-                {cat.emoji}
+              <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-[var(--border)] bg-white/5">
+                {CATEGORY_ICON[cat.region] ?? <span className="text-base">{cat.emoji}</span>}
               </span>
               <div>
                 <h3 className="font-semibold text-sm">{cat.label}</h3>
@@ -332,9 +355,6 @@ export default function PicksForm({
                           {golfer.is_senior && cat.region !== "senior" && (
                             <span className="badge badge-senior">🦕 Fossil</span>
                           )}
-                          {golfer.world_ranking && (
-                            <span className="text-xs text-[var(--muted)]">#{golfer.world_ranking}</span>
-                          )}
                         </div>
                       </div>
                       {golfer.odds && (
@@ -352,7 +372,7 @@ export default function PicksForm({
       })}
 
       <div className="flex items-center gap-3 flex-wrap">
-        <button type="submit" disabled={saving || !allSelected} className="btn-gold">
+        <button type="submit" disabled={locked || saving || !allSelected} className="btn-gold">
           {saving ? "Saving…" : "Save Picks"}
         </button>
         {hasPicks && (

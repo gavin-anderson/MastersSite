@@ -9,7 +9,6 @@ export interface Golfer {
   is_longshot: boolean;
   is_senior: boolean;
   odds: number | null; // e.g. 10000 = 100-1 odds
-  world_ranking: number | null;
   tour: "pga" | "liv";
   image_url: string | null;
   updated_at: string;

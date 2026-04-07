@@ -26,7 +26,7 @@ const PICK_MAP: [string, string, string][] = [
 ];
 
 const COUNTRY_FLAG: Record<string, string> = {
-  USA: "🇺🇸", England: "🏴󠁧󠁢󠁥󠁮󠁧󠁿", Scotland: "🏴󠁧󠁢󠁳󠁣󠁴󠁿", Ireland: "🇮🇪",
+  USA: "🇺🇸", "United States": "🇺🇸", England: "🏴󠁧󠁢󠁥󠁮󠁧󠁿", Scotland: "🏴󠁧󠁢󠁳󠁣󠁴󠁿", Ireland: "🇮🇪",
   "Northern Ireland": "🇬🇧", Spain: "🇪🇸", Germany: "🇩🇪", France: "🇫🇷",
   Sweden: "🇸🇪", Denmark: "🇩🇰", Norway: "🇳🇴", Belgium: "🇧🇪",
   Switzerland: "🇨🇭", Italy: "🇮🇹", Japan: "🇯🇵", "South Korea": "🇰🇷",
@@ -84,10 +84,10 @@ function sortGolfers(golfers: GolferRow[], mode: SortMode): GolferRow[] {
       const bVal = b.roundScore ?? 9999;
       return aVal !== bVal ? aVal - bVal : (a.name < b.name ? -1 : 1);
     }
-    const diff = thruValue(b) - thruValue(a);
-    if (diff !== 0) return diff;
-    if (a.teeTime && b.teeTime) return new Date(a.teeTime).getTime() - new Date(b.teeTime).getTime();
-    return 0;
+    // Tee sort: earliest tee time first, no tee time last
+    const aTime = a.teeTime ? new Date(a.teeTime).getTime() : 9999999999999;
+    const bTime = b.teeTime ? new Date(b.teeTime).getTime() : 9999999999999;
+    return aTime - bTime;
   });
 }
 
@@ -166,7 +166,7 @@ export default function ScheduleClient({
                     : "bg-white/[0.06] text-[var(--muted)] hover:text-[var(--foreground)] hover:bg-white/[0.1]"
                 }`}
               >
-                {mode === "total" ? "Total" : mode === "round" ? "Round" : "Thru"}
+                {mode === "total" ? "Total" : mode === "round" ? "Round" : "Tee"}
               </button>
             ))}
           </div>
@@ -194,14 +194,16 @@ export default function ScheduleClient({
         <div className="grid grid-cols-[2rem_1fr_4.5rem_3.5rem_3.5rem_4rem] gap-x-2 items-center px-4 py-2 border-b border-[var(--border)] bg-white/[0.03]">
           <span className="text-[10px] font-semibold uppercase tracking-wider text-[var(--muted)] text-center">#</span>
           <span className="text-[10px] font-semibold uppercase tracking-wider text-[var(--muted)]">Player</span>
-          <span className="text-[10px] font-semibold uppercase tracking-wider text-[var(--muted)] text-center hidden sm:block">Tee</span>
+          <span className={`text-[10px] font-semibold uppercase tracking-wider text-center hidden sm:block ${sort === "thru" ? "text-[var(--gold)]" : "text-[var(--muted)]"}`}>
+            Tee
+          </span>
           <span className={`text-[10px] font-semibold uppercase tracking-wider text-center ${sort === "round" ? "text-[var(--gold)]" : "text-[var(--muted)]"}`}>
             Rnd
           </span>
           <span className={`text-[10px] font-semibold uppercase tracking-wider text-center ${sort === "total" ? "text-[var(--gold)]" : "text-[var(--muted)]"}`}>
             Total
           </span>
-          <span className={`text-[10px] font-semibold uppercase tracking-wider text-right ${sort === "thru" ? "text-[var(--gold)]" : "text-[var(--muted)]"}`}>
+          <span className="text-[10px] font-semibold uppercase tracking-wider text-right text-[var(--muted)]">
             Thru
           </span>
         </div>
@@ -261,7 +263,9 @@ export default function ScheduleClient({
               </div>
 
               {/* Tee time */}
-              <span className="text-xs tabular-nums text-[var(--muted)] text-center hidden sm:block">
+              <span className={`text-xs tabular-nums text-center hidden sm:block ${
+                sort === "thru" ? "text-[var(--foreground)]" : "text-[var(--muted)]"
+              }`}>
                 {golfer.teeTime ? formatTeeTime(golfer.teeTime) : "TBD"}
               </span>
 

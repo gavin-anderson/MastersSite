@@ -1,14 +1,17 @@
 "use client";
 
 import { useState } from "react";
+import US from "country-flag-icons/react/3x2/US";
+import EU from "country-flag-icons/react/3x2/EU";
+import type { ReactNode } from "react";
 
-const CATEGORY_MAP: Record<string, { emoji: string; label: string }> = {
-  usa:      { emoji: "🇺🇸", label: "American" },
-  european: { emoji: "🇪🇺", label: "European" },
-  asian:    { emoji: "🌏",  label: "Asian" },
-  longshot: { emoji: "🎯",  label: "Longshot" },
-  liv:      { emoji: "⚡",  label: "LIV" },
-  senior:   { emoji: "🦕",  label: "Fossil" },
+const CATEGORY_MAP: Record<string, { icon: ReactNode; label: string }> = {
+  usa:      { icon: <US className="w-4 h-auto rounded-[2px]" />, label: "American" },
+  european: { icon: <EU className="w-4 h-auto rounded-[2px]" />, label: "European" },
+  asian:    { icon: "🌏",  label: "Asian" },
+  longshot: { icon: "🎯",  label: "Longshot" },
+  liv:      { icon: "⚡",  label: "LIV" },
+  senior:   { icon: "🦕",  label: "Fossil" },
 };
 
 function getScoreDisplay(score: number | null, status?: string) {
@@ -74,7 +77,7 @@ function LeaderboardRow({ entry, rank }: { entry: RankedEntry; rank: number }) {
 
             return (
               <div key={j} className="flex items-center gap-2 py-0.5">
-                <span className="text-sm w-5 shrink-0 text-center">{cat.emoji}</span>
+                <span className="w-5 shrink-0 flex items-center justify-center">{cat.icon}</span>
                 <span className="text-sm flex-1 min-w-0 truncate text-[var(--foreground)]">
                   {golfer?.name ?? <span className="text-[var(--muted)] italic">No pick</span>}
                 </span>
