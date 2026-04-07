@@ -73,8 +73,7 @@ function AuthForm() {
       if (!data.session) {
         setSuccess("Account created! Check your email to confirm before signing in.");
       } else {
-        router.push(redirectedFrom);
-        router.refresh();
+        window.location.href = redirectedFrom;
       }
     }
   }
