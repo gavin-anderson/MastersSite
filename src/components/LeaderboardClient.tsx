@@ -92,7 +92,7 @@ function LeaderboardRow({ entry, rank }: { entry: RankedEntry; rank: number }) {
                 <span className="text-sm flex-1 min-w-0 truncate text-[var(--foreground)]">
                   {golfer?.name ?? <span className="text-[var(--muted)] italic">No pick</span>}
                 </span>
-                {position && (
+                {position != null && score != null && (
                   <span className="text-xs text-[var(--muted)] shrink-0">T{position}</span>
                 )}
                 <span className={`text-sm font-bold tabular-nums shrink-0 w-12 text-right ${golfer ? scoreDisplay.cls : "text-[var(--muted)]"}`}>

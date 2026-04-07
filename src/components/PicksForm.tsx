@@ -176,24 +176,33 @@ export default function PicksForm({
     [picks]
   );
 
-  // Filter golfers per category
+  function byOdds(a: Golfer, b: Golfer) {
+    if (a.odds == null && b.odds == null) return 0;
+    if (a.odds == null) return 1;
+    if (b.odds == null) return -1;
+    return a.odds - b.odds;
+  }
+
+  // Filter and sort golfers per category by odds (favorites first)
   const golfersByCategory = useMemo(() =>
     PICK_CATEGORIES.reduce<Record<string, Golfer[]>>((acc, cat) => {
+      let filtered: Golfer[];
       if (cat.region === "longshot") {
-        acc[cat.key] = golfers.filter((g) => g.is_longshot);
+        filtered = golfers.filter((g) => g.is_longshot);
       } else if (cat.region === "liv") {
-        acc[cat.key] = golfers.filter((g) => g.is_liv);
+        filtered = golfers.filter((g) => g.is_liv);
       } else if (cat.region === "past_champ") {
-        acc[cat.key] = golfers.filter((g) => g.is_past_champ);
+        filtered = golfers.filter((g) => g.is_past_champ);
       } else if (cat.region === "young_gun") {
-        acc[cat.key] = golfers.filter((g) => g.is_young_gun);
+        filtered = golfers.filter((g) => g.is_young_gun);
       } else if (cat.region === "international") {
-        acc[cat.key] = golfers.filter((g) => g.region !== "usa" && g.region !== "european");
+        filtered = golfers.filter((g) => g.region !== "usa" && g.region !== "european");
       } else if (cat.region === "free") {
-        acc[cat.key] = golfers;
+        filtered = [...golfers];
       } else {
-        acc[cat.key] = golfers.filter((g) => g.region === cat.region);
+        filtered = golfers.filter((g) => g.region === cat.region);
       }
+      acc[cat.key] = filtered.sort(byOdds);
       return acc;
     }, {}),
     [golfers]
