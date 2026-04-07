@@ -15,6 +15,7 @@ const geistSans = localFont({
 export const metadata: Metadata = {
   title: "The Masters Pool",
   description: "Pick your Masters Tournament team and compete with friends",
+  icons: { icon: "/icon.svg" },
 };
 
 export default async function RootLayout({
