@@ -377,9 +377,18 @@ export default function PicksForm({
                       const takenElsewhere = !isSelected && pickedIds.has(golfer.id);
 
                       return (
-                        <label
+                        <button
                           key={golfer.id}
-                          className={`flex items-center gap-3 p-3 rounded-lg border transition-all ${
+                          type="button"
+                          disabled={takenElsewhere}
+                          onClick={() => {
+                            if (takenElsewhere) return;
+                            setPicks((prev) => ({
+                              ...prev,
+                              [cat.key]: isSelected ? "" : golfer.id,
+                            }));
+                          }}
+                          className={`flex items-center gap-3 p-3 rounded-lg border transition-all text-left ${
                             takenElsewhere
                               ? "opacity-30 cursor-not-allowed border-[var(--border)]"
                               : isSelected
@@ -387,22 +396,6 @@ export default function PicksForm({
                               : "border-[var(--border)] hover:border-[var(--border-strong)] hover:bg-white/[0.03] cursor-pointer"
                           }`}
                         >
-                          <input
-                            type="radio"
-                            name={cat.key}
-                            value={golfer.id}
-                            checked={isSelected}
-                            disabled={takenElsewhere}
-                            onChange={() => {}}
-                            onClick={() => {
-                              if (takenElsewhere) return;
-                              setPicks((prev) => ({
-                                ...prev,
-                                [cat.key]: isSelected ? "" : golfer.id,
-                              }));
-                            }}
-                            className="sr-only"
-                          />
                           <div
                             className={`w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors ${
                               isSelected
@@ -445,7 +438,7 @@ export default function PicksForm({
                               {formatOdds(golfer.odds)}
                             </span>
                           )}
-                        </label>
+                        </button>
                       );
                     })}
                   </div>
