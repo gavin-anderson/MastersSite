@@ -66,8 +66,7 @@ async function LeaderboardContent() {
           name: string;
         } | null;
         const stat = golferId ? statsMap[golferId] : null;
-        const isCut = stat?.status === "mc" || stat?.status === "cut";
-        const score = isCut ? null : (stat?.score ?? null);
+        const score = stat?.score ?? null;
         return { golfer, score, stat, categoryKey };
       });
 

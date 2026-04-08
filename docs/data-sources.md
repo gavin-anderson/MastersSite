@@ -1,17 +1,19 @@
 # Data Sources Guide
 
-How to replace hardcoded golfer data with real live data before each Masters Tournament.
+How to update live golfer data and odds before each Masters Tournament.
 
 ---
 
 ## 1. Live Scores — ESPN API (already built, free)
 
-The cron job at `src/app/api/golf-stats/route.ts` pulls live scores from ESPN's unofficial API every 10 minutes during the tournament via Vercel Cron.
+The cron job at `src/app/api/golf-stats/route.ts` pulls live scores from ESPN's unofficial API every 60 seconds during the tournament via Vercel Cron.
 
 **What it syncs each run:**
 - Golfer name, country, geographic region, `is_liv` flag, world ranking
 - Tournament position, total score to par, current round score, holes played (`thru`), status
 - `round_score` — the current round's score relative to par (from ESPN `linescores` array)
+- `tee_time` — scheduled tee time for the current round
+- `status` — `active` / `mc` / `wd` / `notstarted` / `complete`
 
 ### Find the new Masters Event ID each year
 1. Open `https://site.web.api.espn.com/apis/site/v2/sports/golf/leaderboard?league=pga` in a browser
@@ -22,7 +24,7 @@ The cron job at `src/app/api/golf-stats/route.ts` pulls live scores from ESPN's 
    ```
 
 ### Update the LIV golfer list
-`LIV_GOLFERS` in `golf-stats/route.ts` controls which players get `is_liv = true`. The cron job also uses `tour = 'liv'` as a secondary signal. Update the set each year:
+`LIV_GOLFERS` in `golf-stats/route.ts` controls which players get `is_liv = true`. Update each year:
 ```ts
 const LIV_GOLFERS = new Set([
   "Brooks Koepka",
@@ -30,7 +32,8 @@ const LIV_GOLFERS = new Set([
   // etc.
 ]);
 ```
-> **Note:** Geographic region (`usa`/`european`/`asian`/`other`) is now separate from the LIV flag. A US-born LIV golfer gets `region = 'usa'` AND `is_liv = true` — he appears in both the USA picks list and the LIV picks list.
+
+> **Note:** Geographic region (`usa`/`european`/`international`) is separate from the LIV flag. A US-born LIV golfer gets `region = 'usa'` AND `is_liv = true` — he appears in both the USA picks list and the LIV picks list.
 
 > **Note:** ESPN's API is unofficial and undocumented. It can change without warning. If it breaks, inspect the ESPN website's network requests for an updated endpoint.
 
@@ -54,37 +57,53 @@ Map the `price` field (American odds, e.g. `+5000`) to the `odds` column (store 
 **Option A — Supabase Table Editor**
 Dashboard → Table Editor → `golfers`. Edit rows directly. Best for small changes.
 
-**Option B — SQL (re-run seed block)**
-Replace the seed values in `supabase/schema.sql` with the real field and odds, then run the block in the SQL Editor. The `ON CONFLICT (name) DO UPDATE` clause prevents duplicates.
+**Option B — SQL**
+```sql
+UPDATE public.golfers SET odds = 5000 WHERE name = 'Rory McIlroy';
+-- Longshots auto-flagged by cron when odds >= 10000
+```
 
 ---
 
 ## 3. Managing Category Flags
 
-The golfers table uses three boolean flags that control which pick categories a golfer appears in. Geographic region (`usa`/`european`/`asian`/`other`) is separate and mutually exclusive.
+The golfers table uses boolean flags that control which pick categories a golfer appears in. Geographic region (`usa`/`european`/`international`) is separate and mutually exclusive.
 
 | Flag | Meaning | How to set |
 |---|---|---|
-| `is_liv` | LIV Golf tour member | Auto-set by cron job via `LIV_GOLFERS` set + `tour = 'liv'` |
-| `is_longshot` | 100-1 odds or greater | Auto-set by cron for any `odds >= 10000`; set manually otherwise |
-| `is_senior` | Aged 50 or over (Fossils category) | **Manual only** — set in Supabase Table Editor or SQL |
+| `is_liv` | LIV Golf tour member | Auto-set by cron via `LIV_GOLFERS` set |
+| `is_longshot` | +10000 odds or greater | Auto-set by cron for any `odds >= 10000` |
+| `is_past_champ` | Former Masters champion | **Manual only** — set in Supabase Table Editor |
+| `is_young_gun` | Under 30 years old | Auto-set by `scripts/sync-players.js` |
 
-### Setting Fossils (is_senior) each year
-The cron job cannot determine age from ESPN data, so mark eligible golfers manually before the tournament:
+### Setting Past Champs each year
 ```sql
--- Mark known 50+ players competing this year
-UPDATE public.golfers SET is_senior = true WHERE name IN (
-  'Phil Mickelson', 'Fred Couples', 'Bernhard Langer', 'Mike Weir',
-  'Ernie Els', 'Vijay Singh', 'Larry Mize', 'Sandy Lyle',
-  'Padraig Harrington', 'Jose Maria Olazabal'
+-- Mark known Masters champions in this year's field
+UPDATE public.golfers SET is_past_champ = true WHERE name IN (
+  'Tiger Woods', 'Phil Mickelson', 'Bubba Watson', 'Adam Scott',
+  'Sergio Garcia', 'Patrick Reed', 'Dustin Johnson', 'Hideki Matsuyama',
+  'Scottie Scheffler', 'Jon Rahm', 'Rory McIlroy'
   -- add/remove based on actual field each year
 );
 
--- Clear last year's seniors not in this year's field
-UPDATE public.golfers SET is_senior = false WHERE name = 'Someone Who Withdrew';
+-- Clear past champs who are not in this year's field
+UPDATE public.golfers SET is_past_champ = false WHERE name = 'Someone Who Withdrew';
 ```
 
-Run this in the Supabase SQL Editor ~1 week before the tournament.
+### Setting Young Guns
+Run the sync-players script — it automatically sets `is_young_gun = true` for any golfer born within the last 30 years:
+```bash
+node scripts/sync-players.js
+```
+
+Or set manually in Supabase:
+```sql
+-- Mark golfers under 30 at time of tournament
+UPDATE public.golfers SET is_young_gun = true WHERE name IN (
+  'Ludvig Åberg', 'Nicolai Højgaard', 'Akshay Bhatia'
+  -- etc.
+);
+```
 
 ---
 
@@ -92,12 +111,16 @@ Run this in the Supabase SQL Editor ~1 week before the tournament.
 
 - [ ] Confirm Masters field is finalised (Augusta National announces ~2 weeks before)
 - [ ] Update `MASTERS_EVENT_ID` in `golf-stats/route.ts`
-- [ ] Update `LIV_GOLFERS` set in `golf-stats/route.ts` with this year's LIV members playing Augusta
+- [ ] Update `LIV_GOLFERS` set in `golf-stats/route.ts` with this year's LIV members
 - [ ] Pull real odds from The Odds API and update `odds` column in `golfers` table
-- [ ] Add any new golfers not already in DB — set `region`, `is_liv`, `is_longshot`, `is_senior` as applicable
-- [ ] Run the `is_senior` SQL update to mark/unmark Fossils for this year's field
+- [ ] Add any new golfers not already in DB — set `region`, `is_liv`, `is_longshot` as applicable
+- [ ] Run `sync-players` script to auto-set `is_young_gun` (under 30)
+- [ ] Run `is_past_champ` SQL update to mark/unmark Past Champs for this year's field
 - [ ] Remove or deactivate golfers who did not receive invitations
-- [ ] Add `tournament_config` row for the new year: `INSERT INTO tournament_config (year, picks_locked) VALUES (2026, false)`
+- [ ] Add `tournament_config` row for the new year:
+  ```sql
+  INSERT INTO tournament_config (year, picks_locked) VALUES (2026, false);
+  ```
 - [ ] Confirm Vercel Cron is active and `CRON_SECRET` env var is set in Vercel dashboard
 - [ ] Test the cron endpoint manually: `GET /api/golf-stats` with `Authorization: Bearer <CRON_SECRET>`
 
@@ -105,17 +128,15 @@ Run this in the Supabase SQL Editor ~1 week before the tournament.
 
 ## 5. Locking Picks
 
-When the tournament starts (first tee shot Thursday morning), lock all picks:
+When the tournament starts (first tee shot Thursday morning):
 
-**Option A — Global lock (recommended)**
+**Recommended — Global lock**
 In Supabase dashboard → Table Editor → `tournament_config` → set `picks_locked = true` for the current year. Instant, no redeployment.
 
-**Option B — Row-level lock (belt and suspenders)**
+**Belt-and-suspenders — Row-level lock**
 ```sql
 UPDATE public.picks SET locked = true WHERE year = 2026;
 ```
-
-Run in the SQL Editor right before the tournament begins.
 
 ---
 
@@ -130,6 +151,9 @@ Run in the SQL Editor right before the tournament begins.
 | `position` | integer | Current leaderboard position |
 | `thru` | integer | Holes completed in current round (0–18) |
 | `round` | integer | Current round number (1–4) |
-| `status` | text | `active` / `mc` / `wd` / `notstarted` |
+| `tee_time` | timestamptz | Scheduled tee time for current round |
+| `status` | text | `active` / `mc` / `wd` / `notstarted` / `complete` |
 
 `round_score` is populated from ESPN's `comp.linescores[currentRound - 1].value` each sync.
+
+Missed-cut golfers (`status = 'mc'`) contribute their actual score at the time they were cut to their picker's total.

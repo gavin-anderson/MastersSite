@@ -148,8 +148,7 @@ export default function LeaderboardClient({
       .map((entry) => {
         const golferScores = entry.golferScores.map((gs) => {
           const stat = gs.golfer?.id ? (statsMap[gs.golfer.id] ?? null) : null;
-          const isCut = stat?.status === "mc" || stat?.status === "cut";
-          const score = stat ? (isCut ? null : stat.score) : gs.score;
+          const score = stat ? stat.score : gs.score;
           return { ...gs, score, stat: stat ?? gs.stat };
         });
         const totalScore = golferScores.reduce((sum, { score }) => sum + (score ?? 0), 0);
