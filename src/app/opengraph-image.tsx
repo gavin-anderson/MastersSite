@@ -16,7 +16,7 @@ export default function OGImage() {
           flexDirection: "column",
           alignItems: "center",
           justifyContent: "center",
-          backgroundColor: "#04120a",
+          backgroundColor: "#071c0d",
           gap: 24,
         }}
       >
@@ -27,15 +27,29 @@ export default function OGImage() {
             top: "50%",
             left: "50%",
             transform: "translate(-50%, -50%)",
-            width: 600,
-            height: 600,
+            width: 700,
+            height: 700,
             borderRadius: "50%",
-            background: "radial-gradient(circle, rgba(22,163,74,0.18) 0%, transparent 70%)",
+            background: "radial-gradient(circle, rgba(22,163,74,0.25) 0%, transparent 65%)",
           }}
         />
 
         {/* Icon */}
-        <div style={{ fontSize: 120, lineHeight: 1 }}>⛳</div>
+        <div
+          style={{
+            width: 96,
+            height: 96,
+            borderRadius: "50%",
+            background: "rgba(22,163,74,0.2)",
+            border: "1.5px solid rgba(22,163,74,0.35)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            fontSize: 52,
+          }}
+        >
+          ⛳
+        </div>
 
         {/* Title */}
         <div
@@ -53,7 +67,7 @@ export default function OGImage() {
         <div
           style={{
             fontSize: 28,
-            color: "#6b8a72",
+            color: "#4ade80",
             letterSpacing: "0.5px",
           }}
         >
