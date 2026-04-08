@@ -41,22 +41,42 @@ export async function GET(request: Request) {
     }
 
     const data = await res.json();
-    const competitors = data?.events?.[0]?.competitions?.[0]?.competitors ?? [];
+    const competition = data?.events?.[0]?.competitions?.[0];
+    const competitors = competition?.competitors ?? [];
 
     if (competitors.length === 0) {
       return NextResponse.json({ message: "No competitors found" });
     }
 
-    const year = new Date().getFullYear();
-    const currentRound: number = data?.events?.[0]?.competitions?.[0]?.status?.period || 1;
+    // Don't overwrite scores if the tournament is complete — ESPN zeroes out data post-event
+    const eventState: string = competition?.status?.type?.state ?? "pre";
+    if (eventState === "post") {
+      return NextResponse.json({ message: "Tournament complete — scores preserved" });
+    }
 
-    // Load all golfers once so we can look up IDs by name
-    const { data: golfers } = await supabase
-      .from("golfers")
-      .select("id, name");
+    const year = new Date().getFullYear();
+    const currentRound: number = competition?.status?.period || 1;
+
+    // Load golfers + already-cut players in parallel
+    const [{ data: golfers }, { data: existingStats }] = await Promise.all([
+      supabase.from("golfers").select("id, name"),
+      supabase.from("golfer_stats").select("golfer_id, score, status").eq("year", year),
+    ]);
 
     const golferIdByName = Object.fromEntries(
       (golfers ?? []).map((g: { id: string; name: string }) => [g.name, g.id])
+    );
+
+    // Map of existing DB stats keyed by golfer_id
+    const existingByGolferId = Object.fromEntries(
+      (existingStats ?? []).map((r: { golfer_id: string; score: number | null; status: string }) => [r.golfer_id, r])
+    );
+
+    // Skip golfers already recorded as MC — they're fully locked in
+    const alreadyCut = new Set(
+      (existingStats ?? [])
+        .filter((r: { status: string }) => r.status === "mc")
+        .map((r: { golfer_id: string }) => r.golfer_id)
     );
 
     const updates: Record<string, unknown>[] = [];
@@ -65,6 +85,7 @@ export async function GET(request: Request) {
       const name: string = comp.athlete?.displayName ?? "";
       const golferId = golferIdByName[name];
       if (!golferId) continue;
+      if (alreadyCut.has(golferId)) continue;
 
       // Score to par
       const parScore = comp.statistics?.find(
@@ -88,16 +109,22 @@ export async function GET(request: Request) {
       const roundScore = currentLinescore?.value ?? null;
       const teeTime = currentLinescore?.teeTime ?? null;
 
+      // For MC players: update status but keep the score we already have in the DB.
+      // ESPN zeroes scores after the cut — we never trust their score once mc is set.
+      const finalScore = status === "mc"
+        ? (existingByGolferId[golferId]?.score ?? score)
+        : score;
+
       updates.push({
         golfer_id: golferId,
         year,
-        score,
+        score: finalScore,
         position: comp.sortOrder ?? null,
         status,
-        thru: state === "in" ? (comp.status?.period ?? null) : null,
+        thru: status === "mc" ? null : (state === "in" ? (comp.status?.period ?? null) : null),
         round: currentRound,
-        round_score: roundScore,
-        tee_time: teeTime,
+        round_score: status === "mc" ? null : roundScore,
+        tee_time: status === "mc" ? null : teeTime,
         updated_at: new Date().toISOString(),
       });
     }
