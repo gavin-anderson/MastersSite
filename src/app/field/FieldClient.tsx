@@ -2,8 +2,41 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { createBrowserClient } from "@supabase/ssr";
+import type { ComponentType } from "react";
 import US from "country-flag-icons/react/3x2/US";
 import EU from "country-flag-icons/react/3x2/EU";
+import GB from "country-flag-icons/react/3x2/GB";
+import IE from "country-flag-icons/react/3x2/IE";
+import ES from "country-flag-icons/react/3x2/ES";
+import DE from "country-flag-icons/react/3x2/DE";
+import FR from "country-flag-icons/react/3x2/FR";
+import SE from "country-flag-icons/react/3x2/SE";
+import DK from "country-flag-icons/react/3x2/DK";
+import NO from "country-flag-icons/react/3x2/NO";
+import BE from "country-flag-icons/react/3x2/BE";
+import CH from "country-flag-icons/react/3x2/CH";
+import IT from "country-flag-icons/react/3x2/IT";
+import JP from "country-flag-icons/react/3x2/JP";
+import KR from "country-flag-icons/react/3x2/KR";
+import CN from "country-flag-icons/react/3x2/CN";
+import TH from "country-flag-icons/react/3x2/TH";
+import TW from "country-flag-icons/react/3x2/TW";
+import IN from "country-flag-icons/react/3x2/IN";
+import PH from "country-flag-icons/react/3x2/PH";
+import AU from "country-flag-icons/react/3x2/AU";
+import CA from "country-flag-icons/react/3x2/CA";
+import ZA from "country-flag-icons/react/3x2/ZA";
+import AR from "country-flag-icons/react/3x2/AR";
+import CL from "country-flag-icons/react/3x2/CL";
+import CO from "country-flag-icons/react/3x2/CO";
+import MX from "country-flag-icons/react/3x2/MX";
+import VE from "country-flag-icons/react/3x2/VE";
+import AT from "country-flag-icons/react/3x2/AT";
+import NL from "country-flag-icons/react/3x2/NL";
+import NZ from "country-flag-icons/react/3x2/NZ";
+import ZW from "country-flag-icons/react/3x2/ZW";
+import FJ from "country-flag-icons/react/3x2/FJ";
+import PY from "country-flag-icons/react/3x2/PY";
 
 const CATEGORIES = [
   { key: "all",           label: "All",      icon: null },
@@ -47,16 +80,20 @@ const PICK_MAP: [string, string, string][] = [
   ["young_guns_golfer",    "Young Guns",    "🌟"],
 ];
 
-const COUNTRY_FLAG: Record<string, string> = {
-  USA: "🇺🇸", "United States": "🇺🇸", England: "🏴󠁧󠁢󠁥󠁮󠁧󠁿", Scotland: "🏴󠁧󠁢󠁳󠁣󠁴󠁿", Ireland: "🇮🇪",
-  "Northern Ireland": "🇬🇧", Spain: "🇪🇸", Germany: "🇩🇪", France: "🇫🇷",
-  Sweden: "🇸🇪", Denmark: "🇩🇰", Norway: "🇳🇴", Belgium: "🇧🇪",
-  Switzerland: "🇨🇭", Italy: "🇮🇹", Japan: "🇯🇵", "South Korea": "🇰🇷",
-  Korea: "🇰🇷", China: "🇨🇳", Thailand: "🇹🇭", Taiwan: "🇹🇼",
-  India: "🇮🇳", Philippines: "🇵🇭", Australia: "🇦🇺", Canada: "🇨🇦",
-  "South Africa": "🇿🇦", Argentina: "🇦🇷", Chile: "🇨🇱", Colombia: "🇨🇴",
-  Mexico: "🇲🇽", Venezuela: "🇻🇪", Austria: "🇦🇹", Netherlands: "🇳🇱",
-  "New Zealand": "🇳🇿", Zimbabwe: "🇿🇼", Fiji: "🇫🇯", Paraguay: "🇵🇾",
+type FlagComponent = ComponentType<{ className?: string }>;
+
+const COUNTRY_FLAG: Record<string, FlagComponent> = {
+  USA: US, "United States": US,
+  England: GB, Scotland: GB, "Northern Ireland": GB, Wales: GB,
+  Ireland: IE,
+  Spain: ES, Germany: DE, France: FR, Sweden: SE, Denmark: DK,
+  Norway: NO, Belgium: BE, Switzerland: CH, Italy: IT,
+  Japan: JP, "South Korea": KR, Korea: KR, China: CN,
+  Thailand: TH, Taiwan: TW, India: IN, Philippines: PH,
+  Australia: AU, Canada: CA, "South Africa": ZA,
+  Argentina: AR, Chile: CL, Colombia: CO, Mexico: MX,
+  Venezuela: VE, Austria: AT, Netherlands: NL, "New Zealand": NZ,
+  Zimbabwe: ZW, Fiji: FJ, Paraguay: PY,
 };
 
 function formatTeeTime(iso: string): string {
@@ -179,11 +216,14 @@ function assignRanks(sorted: GolferRow[], mode: SortMode): (number | string)[] {
   return ranks;
 }
 
-function PlayerAvatar({ imageUrl, name, flag }: { imageUrl: string | null; name: string; flag: string }) {
+function PlayerAvatar({ imageUrl, name, country }: { imageUrl: string | null; name: string; country: string }) {
   const [failed, setFailed] = useState(false);
+  const Flag = COUNTRY_FLAG[country];
 
   if (!imageUrl || failed) {
-    return <span className="text-base leading-none shrink-0">{flag}</span>;
+    return Flag
+      ? <Flag className="w-5 h-auto rounded-[2px] shrink-0" />
+      : <span className="w-5 text-center text-xs text-[var(--muted)] shrink-0">?</span>;
   }
 
   return (
@@ -403,7 +443,6 @@ export default function FieldClient({
 
         {/* Golfer rows */}
         {displayed.map((golfer, i) => {
-          const flag = COUNTRY_FLAG[golfer.country] ?? "🏳️";
           const isMC = golfer.status === "mc";
           const isWD = golfer.status === "wd";
           const isActive = golfer.status === "active";
@@ -441,7 +480,7 @@ export default function FieldClient({
 
                 {/* Avatar + Name + Pick badge */}
                 <div className="flex items-center gap-1.5 min-w-0">
-                  <PlayerAvatar imageUrl={golfer.image_url} name={golfer.name} flag={flag} />
+                  <PlayerAvatar imageUrl={golfer.image_url} name={golfer.name} country={golfer.country} />
                   <span className={`text-sm font-medium truncate ${isMC || isWD ? "line-through" : ""}`}>
                     {golfer.name}
                   </span>
