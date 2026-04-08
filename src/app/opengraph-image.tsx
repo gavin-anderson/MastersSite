@@ -16,7 +16,7 @@ export default function OGImage() {
           flexDirection: "column",
           alignItems: "center",
           justifyContent: "center",
-          backgroundColor: "#071c0d",
+          backgroundColor: "#0d2e16",
           gap: 24,
         }}
       >
