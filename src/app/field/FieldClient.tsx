@@ -478,12 +478,19 @@ export default function FieldClient({
                   {rank}
                 </span>
 
-                {/* Avatar + Name + Pick badge */}
+                {/* Avatar + Name + Tee time (mobile) + Pick badge */}
                 <div className="flex items-center gap-1.5 min-w-0">
                   <PlayerAvatar imageUrl={golfer.image_url} name={golfer.name} country={golfer.country} />
-                  <span className={`text-sm font-medium truncate ${isMC || isWD ? "line-through" : ""}`}>
-                    {golfer.name}
-                  </span>
+                  <div className="flex flex-col min-w-0">
+                    <span className={`text-sm font-medium truncate ${isMC || isWD ? "line-through" : ""}`}>
+                      {golfer.name}
+                    </span>
+                    {golfer.teeTime && !isMC && !isWD && (
+                      <span className="text-[10px] text-[var(--muted)] sm:hidden">
+                        {formatTeeTime(golfer.teeTime)}
+                      </span>
+                    )}
+                  </div>
                   <span className="hidden sm:contents">
                     {golfer.region === "usa" && (
                       <span className="badge badge-usa shrink-0">USA</span>
