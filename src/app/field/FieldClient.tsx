@@ -169,15 +169,14 @@ function computePositions(golfers: GolferRow[]): Record<string, number | string>
   const sorted = [...active].sort((a, b) => {
     const scoreDiff = (a.score ?? 9999) - (b.score ?? 9999);
     if (scoreDiff !== 0) return scoreDiff;
-    return (a.thru ?? 0) - (b.thru ?? 0);
+    return (b.thru ?? 0) - (a.thru ?? 0); // more holes played = better rank
   });
 
   for (let i = 0; i < sorted.length; i++) {
     const g = sorted[i];
-    const hasTie = sorted.some(
-      (other, j) => j !== i && other.score === g.score && (other.thru ?? 0) === (g.thru ?? 0)
-    );
-    result[g.name] = hasTie ? "—" : i + 1;
+    const hasTie = sorted.filter((other) => other.score === g.score).length > 1;
+    const tieStart = sorted.findIndex((other) => other.score === g.score);
+    result[g.name] = hasTie ? `T${tieStart + 1}` : i + 1;
   }
 
   for (const g of golfers) {
