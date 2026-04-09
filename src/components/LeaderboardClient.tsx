@@ -118,14 +118,27 @@ export default function LeaderboardClient({
 }) {
   const [statsMap, setStatsMap] = useState<Record<string, StatRow>>({});
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [showGuessModal, setShowGuessModal] = useState(false);
+  const [guessValue, setGuessValue] = useState("");
+  const [guessSubmitting, setGuessSubmitting] = useState(false);
 
   useEffect(() => {
     const supabase = createBrowserClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
     );
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      setCurrentUserId(user?.id ?? null);
+    supabase.auth.getUser().then(async ({ data: { user } }) => {
+      if (!user) return;
+      setCurrentUserId(user.id);
+      const { data: pick } = await supabase
+        .from("picks")
+        .select("guessed_score")
+        .eq("user_id", user.id)
+        .eq("year", new Date().getFullYear())
+        .single();
+      if (pick && pick.guessed_score === null) {
+        setShowGuessModal(true);
+      }
     });
     const channel = supabase
       .channel("leaderboard_golfer_stats")
@@ -158,16 +171,72 @@ export default function LeaderboardClient({
       .sort((a, b) => a.totalScore - b.totalScore);
   }, [initialRanked, statsMap]);
 
+  async function submitGuess() {
+    const parsed = parseInt(guessValue);
+    if (isNaN(parsed) || !currentUserId) return;
+    setGuessSubmitting(true);
+    const supabase = createBrowserClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    );
+    await supabase
+      .from("picks")
+      .update({ guessed_score: parsed })
+      .eq("user_id", currentUserId)
+      .eq("year", new Date().getFullYear());
+    setGuessSubmitting(false);
+    setShowGuessModal(false);
+  }
+
   return (
-    <div className="space-y-2">
-      {ranked.map((entry, i) => (
-        <LeaderboardRow
-          key={entry.id}
-          entry={entry}
-          rank={i + 1}
-          canExpand={picksLocked || entry.userId === currentUserId}
-        />
-      ))}
-    </div>
+    <>
+      {showGuessModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-4">
+          <div className="glass-card w-full max-w-sm p-6 space-y-5">
+            <div className="space-y-1">
+              <h2 className="text-lg font-bold">Tiebreaker Guess</h2>
+              <p className="text-sm text-[var(--muted)]">
+                What will the winning score be? Enter the net score to par (e.g. <span className="text-[var(--foreground)]">-18</span>, <span className="text-[var(--foreground)]">E</span>, <span className="text-[var(--foreground)]">+2</span>).
+              </p>
+            </div>
+            <input
+              type="number"
+              value={guessValue}
+              onChange={(e) => setGuessValue(e.target.value)}
+              placeholder="-18"
+              className="field-input w-full text-center text-lg tabular-nums"
+              onKeyDown={(e) => e.key === "Enter" && submitGuess()}
+              autoFocus
+            />
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowGuessModal(false)}
+                className="flex-1 py-2 rounded-lg text-sm text-[var(--muted)] bg-white/5 hover:bg-white/10 transition-colors"
+              >
+                Skip for now
+              </button>
+              <button
+                onClick={submitGuess}
+                disabled={guessSubmitting || guessValue.trim() === ""}
+                className="flex-1 py-2 rounded-lg text-sm font-semibold bg-[var(--accent)] text-white hover:bg-[var(--accent-light)] transition-colors disabled:opacity-50"
+              >
+                {guessSubmitting ? "Saving…" : "Submit"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div className="space-y-2">
+        {ranked.map((entry, i) => (
+          <LeaderboardRow
+            key={entry.id}
+            entry={entry}
+            rank={i + 1}
+            canExpand={picksLocked || entry.userId === currentUserId}
+          />
+        ))}
+      </div>
+    </>
   );
 }
