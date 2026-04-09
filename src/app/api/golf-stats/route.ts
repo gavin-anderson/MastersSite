@@ -124,7 +124,7 @@ export async function GET(request: Request) {
         score: finalScore,
         position: comp.sortOrder ?? null,
         status,
-        thru: status === "mc" ? null : (state === "in" ? (comp.status?.period ?? null) : null),
+        thru: status === "mc" ? null : (state === "in" ? (comp.status?.thru ?? null) : null),
         round: currentRound,
         round_score: status === "mc" ? null : roundScore,
         tee_time: status === "mc" ? null : teeTime,
