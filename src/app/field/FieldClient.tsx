@@ -531,7 +531,7 @@ export default function FieldClient({
                   isMC || isWD ? "text-[var(--muted)]" :
                   sort === "round" ? "font-bold text-[var(--foreground)]" : "text-[var(--muted-light)]"
                 }`}>
-                  {isMC || isWD ? "—" : golfer.roundScore != null ? golfer.roundScore : "TBD"}
+                  {isMC || isWD ? "—" : golfer.roundScore != null ? scoreText(golfer.roundScore) : "TBD"}
                 </span>
 
                 {/* Total score */}

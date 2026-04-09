@@ -104,9 +104,12 @@ export async function GET(request: Request) {
         state === "in" ? "active" : "notstarted";
 
       // Round score and tee time from linescores
-      const linescores: { value?: number; teeTime?: string }[] = comp.linescores ?? [];
+      const linescores: { value?: number; displayValue?: string; teeTime?: string }[] = comp.linescores ?? [];
       const currentLinescore = linescores[currentRound - 1];
-      const roundScore = currentLinescore?.value ?? null;
+      // Use displayValue (net score to par, e.g. "+1", "E", "-4") instead of raw strokes
+      const roundDisplay = currentLinescore?.displayValue;
+      const parsedRound = roundDisplay === "E" ? 0 : roundDisplay && roundDisplay !== "-" ? parseInt(roundDisplay) : null;
+      const roundScore = Number.isFinite(parsedRound ?? NaN) ? parsedRound : null;
       const teeTime = currentLinescore?.teeTime ?? null;
 
       // For MC players: update status but keep the score we already have in the DB.
