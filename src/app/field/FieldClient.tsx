@@ -111,7 +111,7 @@ function scoreText(score: number | null): string {
 }
 
 function scoreCls(score: number | null, status: GolferRow["status"]): string {
-  if (status === "mc" || status === "wd") return "text-[var(--muted)]";
+  if (status === "wd") return "text-[var(--muted)]";
   if (score === null || isNaN(score)) return "text-[var(--muted)]";
   if (score < 0) return "score-under";
   if (score > 0) return "score-over";
@@ -131,7 +131,7 @@ function sortGolfers(golfers: GolferRow[], mode: SortMode): GolferRow[] {
     const bOut = b.status === "mc" || b.status === "wd";
     if (aOut && !bOut) return 1;
     if (!aOut && bOut) return -1;
-    if (aOut && bOut) return 0;
+    if (aOut && bOut) return (a.score ?? 9999) - (b.score ?? 9999);
 
     if (mode === "total") {
       const aVal = a.score ?? 9999;
@@ -165,12 +165,15 @@ function computePositions(golfers: GolferRow[]): Record<string, number | string>
   const active = golfers.filter(
     (g) => g.status !== "mc" && g.status !== "wd" && g.score !== null
   );
+  const cut = golfers.filter((g) => g.status === "mc" && g.score !== null);
 
   const sorted = [...active].sort((a, b) => {
     const scoreDiff = (a.score ?? 9999) - (b.score ?? 9999);
     if (scoreDiff !== 0) return scoreDiff;
-    return (b.thru ?? 0) - (a.thru ?? 0); // more holes played = better rank
+    return (b.thru ?? 0) - (a.thru ?? 0);
   });
+
+  const sortedCut = [...cut].sort((a, b) => (a.score ?? 9999) - (b.score ?? 9999));
 
   for (let i = 0; i < sorted.length; i++) {
     const g = sorted[i];
@@ -179,10 +182,17 @@ function computePositions(golfers: GolferRow[]): Record<string, number | string>
     result[g.name] = hasTie ? `T${tieStart + 1}` : i + 1;
   }
 
+  const cutOffset = sorted.length;
+  for (let i = 0; i < sortedCut.length; i++) {
+    const g = sortedCut[i];
+    const hasTie = sortedCut.filter((other) => other.score === g.score).length > 1;
+    const tieStart = sortedCut.findIndex((other) => other.score === g.score);
+    result[g.name] = hasTie ? `T${cutOffset + tieStart + 1}` : cutOffset + i + 1;
+  }
+
   for (const g of golfers) {
     if (!(g.name in result)) {
-      if (g.status === "mc") result[g.name] = "MC";
-      else if (g.status === "wd") result[g.name] = "WD";
+      if (g.status === "wd") result[g.name] = "WD";
       else result[g.name] = "—";
     }
   }
@@ -522,7 +532,7 @@ export default function FieldClient({
                 <span className={`text-xs tabular-nums text-center hidden sm:block ${
                   sort === "thru" ? "text-[var(--foreground)]" : "text-[var(--muted)]"
                 }`}>
-                  {golfer.teeTime ? formatTeeTime(golfer.teeTime) : "TBD"}
+                  {isMC || isWD ? "MC" : golfer.teeTime ? formatTeeTime(golfer.teeTime) : "TBD"}
                 </span>
 
                 {/* Round score */}
@@ -535,7 +545,7 @@ export default function FieldClient({
 
                 {/* Total score */}
                 <span className={`text-sm font-bold tabular-nums text-center ${scoreCls(golfer.score, golfer.status)}`}>
-                  {isMC ? "MC" : isWD ? "WD" : scoreText(golfer.score)}
+                  {isWD ? "WD" : scoreText(golfer.score)}
                 </span>
 
                 {/* Thru */}

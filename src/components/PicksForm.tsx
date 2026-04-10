@@ -82,9 +82,11 @@ function RosterStat({ stat, odds }: { stat?: StatRow; odds: number | null }) {
 
   if (stat.status === "mc" || stat.status === "cut") {
     return (
-      <div className="text-right shrink-0">
-        <p className="text-xs font-bold score-over">MC</p>
-        <p className="text-[10px] text-[var(--muted)]">not counted</p>
+      <div className="text-right shrink-0 space-y-0.5">
+        <span className={`text-sm font-bold tabular-nums ${scoreCls(stat.score)}`}>
+          {scoreText(stat.score)}
+        </span>
+        <p className="text-[10px] text-[var(--muted)] uppercase tracking-wider">MC</p>
       </div>
     );
   }
@@ -310,7 +312,7 @@ export default function PicksForm({
             const stat = golferId ? liveStats[golferId] : undefined;
 
             return (
-              <div key={cat.key} className="glass-card-sm px-4 py-3 flex items-center gap-3">
+              <div key={cat.key} className={`glass-card-sm px-4 py-3 flex items-center gap-3 transition-opacity ${stat?.status === "mc" || stat?.status === "cut" ? "opacity-40" : ""}`}>
                 <span className="shrink-0 flex items-center justify-center w-6">
                   {CATEGORY_ICON[cat.region] ?? <span className="text-xl">{cat.emoji}</span>}
                 </span>
@@ -318,7 +320,7 @@ export default function PicksForm({
                   <p className="text-[10px] text-[var(--muted)] font-medium uppercase tracking-wider">
                     {cat.label}
                   </p>
-                  <p className="font-semibold text-sm truncate mt-0.5">
+                  <p className={`font-semibold text-sm truncate mt-0.5 ${stat?.status === "mc" || stat?.status === "cut" ? "line-through text-[var(--muted)]" : ""}`}>
                     {golfer?.name ?? <span className="text-[var(--muted)] italic">No pick</span>}
                   </p>
                 </div>

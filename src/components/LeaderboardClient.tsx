@@ -24,13 +24,11 @@ const CATEGORY_MAP: Record<string, { icon: ReactNode; label: string }> = {
   young_gun:     { icon: "🌟", label: "Young Guns" },
 };
 
-function getScoreDisplay(score: number | null, status?: string) {
-  if (status === "mc" || status === "cut")
-    return { text: "MC", cls: "text-[var(--muted)]" };
+function getScoreDisplay(score: number | null) {
   if (score === null) return { text: "-", cls: "text-[var(--muted)]" };
-  if (score < 0) return { text: `${score}`, cls: "score-under" };
-  if (score > 0) return { text: `+${score}`, cls: "score-over" };
-  return { text: "E", cls: "score-even" };
+  const text = score < 0 ? `${score}` : score > 0 ? `+${score}` : "E";
+  const cls = score < 0 ? "score-under" : score > 0 ? "score-over" : "score-even";
+  return { text, cls };
 }
 
 interface GolferScore {
@@ -85,18 +83,21 @@ function LeaderboardRow({ entry, rank, canExpand }: { entry: RankedEntry; rank: 
         <div className="border-t border-[var(--border)] px-4 pb-3 pt-2 space-y-1">
           {entry.golferScores.map(({ golfer, score, stat, categoryKey }, j) => {
             const cat = CATEGORY_MAP[categoryKey] ?? { emoji: "🏌️", label: categoryKey };
-            const scoreDisplay = getScoreDisplay(score, stat?.status);
+            const scoreDisplay = getScoreDisplay(score);
             const position = stat?.position;
 
+            const isMC = stat?.status === "mc" || stat?.status === "cut";
             return (
-              <div key={j} className="flex items-center gap-2 py-0.5">
+              <div key={j} className={`flex items-center gap-2 py-0.5 ${isMC ? "opacity-40" : ""}`}>
                 <span className="w-5 shrink-0 flex items-center justify-center">{cat.icon}</span>
-                <span className="text-sm flex-1 min-w-0 truncate text-[var(--foreground)]">
+                <span className={`text-sm flex-1 min-w-0 truncate ${isMC ? "line-through text-[var(--muted)]" : "text-[var(--foreground)]"}`}>
                   {golfer?.name ?? <span className="text-[var(--muted)] italic">No pick</span>}
                 </span>
-                {position != null && score != null && (
+                {stat?.status === "mc" || stat?.status === "cut" ? (
+                  <span className="text-xs text-[var(--muted)] shrink-0">MC</span>
+                ) : position != null && score != null ? (
                   <span className="text-xs text-[var(--muted)] shrink-0">T{position}</span>
-                )}
+                ) : null}
                 <span className={`text-sm font-bold tabular-nums shrink-0 w-12 text-right ${golfer ? scoreDisplay.cls : "text-[var(--muted)]"}`}>
                   {golfer ? scoreDisplay.text : "–"}
                 </span>
