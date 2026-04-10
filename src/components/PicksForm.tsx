@@ -20,6 +20,7 @@ interface StatRow {
   position: number | null;
   status: string;
   thru: number | null;
+  tee_time: string | null;
 }
 
 interface PicksFormProps {
@@ -70,7 +71,7 @@ function scoreCls(score: number | null): string {
 }
 
 function RosterStat({ stat, odds }: { stat?: StatRow; odds: number | null }) {
-  if (!stat || stat.status === "notstarted") {
+  if (!stat || (stat.status === "notstarted" && stat.score === null)) {
     return odds ? (
       <div className="text-right shrink-0">
         <p className="text-[10px] text-[var(--muted)] uppercase tracking-wider">Odds</p>
@@ -97,8 +98,14 @@ function RosterStat({ stat, odds }: { stat?: StatRow; odds: number | null }) {
   }
 
   const isActive = stat.status === "active";
+  const isWaiting = stat.status === "notstarted" && stat.score !== null;
   const thruText = stat.thru != null
     ? stat.thru === 18 ? "F" : `Thru ${stat.thru}`
+    : null;
+  const teeTimeText = stat.tee_time
+    ? new Date(stat.tee_time).toLocaleTimeString("en-US", {
+        hour: "numeric", minute: "2-digit", timeZone: "America/New_York",
+      }) + " ET"
     : null;
 
   return (
@@ -116,6 +123,9 @@ function RosterStat({ stat, odds }: { stat?: StatRow; odds: number | null }) {
           <span className="w-1.5 h-1.5 rounded-full bg-[var(--accent-light)] animate-pulse inline-block" />
           {thruText} · Today {scoreText(stat.round_score)}
         </p>
+      )}
+      {isWaiting && teeTimeText && (
+        <p className="text-[10px] text-[var(--muted)]">Tee {teeTimeText}</p>
       )}
     </div>
   );

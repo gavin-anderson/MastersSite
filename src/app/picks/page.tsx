@@ -38,7 +38,7 @@ async function PicksContent() {
     getGolfers(),
     supabase.from("picks").select("*").eq("user_id", user.id).eq("year", TOURNAMENT_YEAR).single(),
     service.from("tournament_config").select("picks_locked").eq("year", TOURNAMENT_YEAR).single(),
-    service.from("golfer_stats").select("golfer_id, score, round_score, position, status, thru").eq("year", TOURNAMENT_YEAR),
+    service.from("golfer_stats").select("golfer_id, score, round_score, position, status, thru, tee_time").eq("year", TOURNAMENT_YEAR),
   ]);
 
   const picksLocked = config?.picks_locked || existingPicks?.locked || false;
